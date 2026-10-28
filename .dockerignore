@@ -1,0 +1,12 @@
+target/
+build/
+.git/
+.gitignore
+.idea/
+.vscode/
+docs/
+*.md
+.env
+.env.*
+logs/
+.testcontainers/
