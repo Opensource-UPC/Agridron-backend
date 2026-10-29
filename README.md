@@ -88,6 +88,9 @@ Antes de escribir código en un bounded context, lee
 
 Decisiones de arquitectura registradas en [`docs/adrs`](docs/adrs).
 
+El mapeo de persistencia de Field Management está en
+[`docs/field-persistence.md`](docs/field-persistence.md).
+
 ## Ramas
 
 - `main`: versiones liberadas.
