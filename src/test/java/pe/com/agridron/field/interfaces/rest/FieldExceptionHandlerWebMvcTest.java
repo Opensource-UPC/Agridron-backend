@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Verifies that the Field advice wins over the global handler for invalid geometries while
  * the global handler keeps covering every other exception.
  */
-@WebMvcTest
+@WebMvcTest(controllers = FieldExceptionHandlerWebMvcTest.ThrowingController.class)
 @Import(FieldExceptionHandlerWebMvcTest.ThrowingController.class)
 class FieldExceptionHandlerWebMvcTest {
 
