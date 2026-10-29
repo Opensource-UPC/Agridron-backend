@@ -52,6 +52,11 @@ La API queda disponible en `http://localhost:8080`.
 ```text
 src/main/java/pe/com/agridron
 ├── AgridronApplication.java
+├── field                           # Field Management (fincas, parcelas, cultivos, fumigación)
+│   ├── application                 # command/query services
+│   ├── domain                      # agregados, value objects, eventos, repositorios
+│   ├── infrastructure/persistence  # entidades JPA y adaptadores
+│   └── interfaces/rest             # controladores, resources y assemblers
 └── shared
     ├── application/result          # Result<T, E> y ApplicationError
     ├── domain
@@ -67,8 +72,8 @@ src/main/java/pe/com/agridron
     └── interfaces/rest             # ProblemDetail, manejador global, status
 ```
 
-Los bounded contexts (`iam`, `field`, `flight`, `weather`, `analytics`, `inventory`) se agregarán
-como paquetes hermanos de `shared`, cada uno con las capas `domain`, `application`,
+El resto de bounded contexts (`iam`, `flight`, `weather`, `analytics`, `inventory`) se
+agregarán como paquetes hermanos de `shared`, cada uno con las capas `domain`, `application`,
 `infrastructure` e `interfaces`.
 
 ## Pruebas
@@ -89,7 +94,8 @@ Antes de escribir código en un bounded context, lee
 Decisiones de arquitectura registradas en [`docs/adrs`](docs/adrs).
 
 El mapeo de persistencia de Field Management está en
-[`docs/field-persistence.md`](docs/field-persistence.md).
+[`docs/field-persistence.md`](docs/field-persistence.md) y su contrato HTTP en
+[`docs/field-api.md`](docs/field-api.md).
 
 ## Ramas
 

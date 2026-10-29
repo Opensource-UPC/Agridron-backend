@@ -9,5 +9,6 @@
 | [ADR-005](ADR-005-flyway-migrations.md) | Flyway como única fuente del esquema | Aceptado |
 | [ADR-006](ADR-006-postgis-geometries.md) | PostGIS para geometrías | Aceptado |
 | [ADR-007](ADR-007-shared-kernel-boundaries.md) | Límites del shared kernel | Aceptado |
+| [ADR-008](ADR-008-geojson-at-rest-boundary.md) | GeoJSON en el borde REST | Aceptado |
 
 Formato basado en [Michael Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).

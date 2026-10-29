@@ -1,8 +1,9 @@
 # Field Management — persistencia
 
 Mapa de la capa `infrastructure/persistence/jpa` del bounded context Field Management.
-Las reglas generales están en [`backend-conventions.md`](backend-conventions.md) y la decisión
-espacial en [`ADR-006`](adrs/ADR-006-postgis-geometries.md).
+Las reglas generales están en [`backend-conventions.md`](backend-conventions.md), la decisión
+espacial en [`ADR-006`](adrs/ADR-006-postgis-geometries.md) y el contrato HTTP en
+[`field-api.md`](field-api.md).
 
 ## Migraciones
 
@@ -84,6 +85,17 @@ espárrago, quinua y arándano.
     mutable y publica los eventos que el agregado registró antes de guardar.
 - La publicación ocurre dentro de la transacción del command service.
 
+## Exposición REST
+
+- Las entidades JPA y los agregados nunca se serializan directamente: los controladores
+  devuelven `XxxResource` construidos por los assemblers de `interfaces/rest/transform`.
+- El agregado se reconstituye desde la base con su geometría JTS y el área recalculada; la
+  respuesta REST convierte esa geometría a GeoJSON ([`ADR-008`](adrs/ADR-008-geojson-at-rest-boundary.md)).
+- `area_hectares` se guarda para los filtros por rango, pero no se lee como fuente de verdad:
+  el dominio siempre recalcula el área desde el polígono.
+- Los IDs de otros bounded contexts (`owner_id`, `supervisor_id`) se persisten como valores
+  opacos, sin FK física, hasta que exista IAM.
+
 ## Búsqueda de parcelas
 
 `ParcelRepositoryImpl.search(ParcelSearchCriteria)` usa `ParcelSpecifications` y combina con
@@ -101,3 +113,11 @@ PostGIS con Testcontainers) y requieren Docker:
 
 El contenedor PostGIS se inicia una vez por JVM y se comparte entre clases, de modo que los
 contextos de Spring cacheados siempre apuntan a una base viva.
+
+El flujo completo de la API se cubre en `FieldManagementE2ETest` (`@SpringBootTest` +
+`@AutoConfigureMockMvc` + `@Transactional`), que usa el mismo contenedor y revierte cada
+prueba:
+
+```bash
+./mvnw -Dtest='FieldManagementE2ETest' test
+```
