@@ -6,6 +6,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
+import pe.com.agridron.field.domain.events.FarmDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.FarmRegisteredEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorAssignedEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorRemovedEvent;
@@ -99,7 +100,7 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
     }
 
     @Test
-    void updatingDetailsOfExistingFarmDoesNotPublishEvents() {
+    void updatingDetailsOfExistingFarmPublishesEvent() {
         var persisted = persistFarm(10L, "Finca El Sol", Set.of());
         var farm = farmRepository.findById(persisted.getId()).orElseThrow();
 
@@ -108,6 +109,26 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
 
         assertThat(saved.getName()).isEqualTo("Nueva Finca");
         assertThat(saved.getLocation()).isEqualTo("Ica");
+        assertThat(applicationEvents.stream(FarmDetailsUpdatedEvent.class))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.farmId()).isEqualTo(persisted.getId());
+                    assertThat(event.ownerId()).isEqualTo(10L);
+                    assertThat(event.name()).isEqualTo("Nueva Finca");
+                    assertThat(event.location()).isEqualTo("Ica");
+                    assertThat(event.department()).isEqualTo("Ica");
+                });
+    }
+
+    @Test
+    void updatingDetailsWithoutChangesDoesNotPublishEvents() {
+        var persisted = persistFarm(10L, "Finca El Sol", Set.of());
+        var farm = farmRepository.findById(persisted.getId()).orElseThrow();
+
+        farm.updateDetails("Finca El Sol", "Lima", "Lima");
+        farmRepository.save(farm);
+
+        assertThat(applicationEvents.stream(FarmDetailsUpdatedEvent.class)).isEmpty();
         assertThat(applicationEvents.stream(FarmSupervisorAssignedEvent.class)).isEmpty();
         assertThat(applicationEvents.stream(FarmSupervisorRemovedEvent.class)).isEmpty();
     }

@@ -2,9 +2,11 @@ package pe.com.agridron.field.interfaces.eventhandlers;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import pe.com.agridron.field.domain.events.FarmDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.FarmRegisteredEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorAssignedEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorRemovedEvent;
+import pe.com.agridron.field.interfaces.events.FarmDetailsUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmRegisteredIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmSupervisorAssignedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmSupervisorRemovedIntegrationEvent;
@@ -31,6 +33,20 @@ class FarmIntegrationEventsHandlerTest {
                     assertThat(integrationEvent.farmId()).isEqualTo(1L);
                     assertThat(integrationEvent.ownerId()).isEqualTo(10L);
                     assertThat(integrationEvent.name()).isEqualTo("Finca El Sol");
+                });
+    }
+
+    @Test
+    void publishesFarmDetailsUpdatedIntegrationEvent() {
+        handler.on(new FarmDetailsUpdatedEvent(1L, 10L, "Finca Nueva", "Ica", "Ica"));
+
+        var event = capturePublished();
+        assertThat(event).isInstanceOfSatisfying(
+                FarmDetailsUpdatedIntegrationEvent.class, integrationEvent -> {
+                    assertThat(integrationEvent.farmId()).isEqualTo(1L);
+                    assertThat(integrationEvent.ownerId()).isEqualTo(10L);
+                    assertThat(integrationEvent.name()).isEqualTo("Finca Nueva");
+                    assertThat(integrationEvent.location()).isEqualTo("Ica");
                 });
     }
 

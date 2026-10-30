@@ -1,6 +1,7 @@
 package pe.com.agridron.field.domain.model.aggregates;
 
 import org.junit.jupiter.api.Test;
+import pe.com.agridron.field.domain.events.FarmDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.FarmRegisteredEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorAssignedEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorRemovedEvent;
@@ -88,7 +89,7 @@ class FarmTest {
     }
 
     @Test
-    void updateDetailsNormalizesText() {
+    void updateDetailsNormalizesTextAndRegistersEvent() {
         var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
 
         farm.updateDetails("  Nueva Finca ", "  Ica ", "  Ica ");
@@ -96,6 +97,23 @@ class FarmTest {
         assertThat(farm.getName()).isEqualTo("Nueva Finca");
         assertThat(farm.getLocation()).isEqualTo("Ica");
         assertThat(farm.getDepartment()).isEqualTo("Ica");
+        assertThat(farm.domainEvents()).singleElement()
+                .isInstanceOfSatisfying(FarmDetailsUpdatedEvent.class, event -> {
+                    assertThat(event.farmId()).isEqualTo(1L);
+                    assertThat(event.ownerId()).isEqualTo(10L);
+                    assertThat(event.name()).isEqualTo("Nueva Finca");
+                    assertThat(event.location()).isEqualTo("Ica");
+                    assertThat(event.department()).isEqualTo("Ica");
+                });
+    }
+
+    @Test
+    void updatingDetailsWithoutChangesDoesNotRegisterEvent() {
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+
+        farm.updateDetails("  Finca ", " Lima ", "Lima");
+
+        assertThat(farm.domainEvents()).isEmpty();
     }
 
     @Test

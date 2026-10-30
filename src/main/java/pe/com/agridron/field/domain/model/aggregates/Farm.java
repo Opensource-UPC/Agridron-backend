@@ -1,6 +1,7 @@
 package pe.com.agridron.field.domain.model.aggregates;
 
 import lombok.Getter;
+import pe.com.agridron.field.domain.events.FarmDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.FarmRegisteredEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorAssignedEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorRemovedEvent;
@@ -10,6 +11,7 @@ import pe.com.agridron.shared.domain.model.aggregates.AbstractDomainAggregateRoo
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -73,9 +75,20 @@ public class Farm extends AbstractDomainAggregateRoot<Farm> {
     }
 
     public void updateDetails(String name, String location, String department) {
-        this.name = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
-        this.location = DomainValidation.requireText(location, "location", LOCATION_MAX_LENGTH);
-        this.department = DomainValidation.requireText(department, "department", DEPARTMENT_MAX_LENGTH);
+        var newName = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
+        var newLocation = DomainValidation.requireText(location, "location", LOCATION_MAX_LENGTH);
+        var newDepartment = DomainValidation.requireText(department, "department", DEPARTMENT_MAX_LENGTH);
+
+        if (Objects.equals(this.name, newName)
+                && Objects.equals(this.location, newLocation)
+                && Objects.equals(this.department, newDepartment)) {
+            return;
+        }
+
+        this.name = newName;
+        this.location = newLocation;
+        this.department = newDepartment;
+        registerDomainEvent(FarmDetailsUpdatedEvent.from(this));
     }
 
     /**

@@ -3,9 +3,11 @@ package pe.com.agridron.field.interfaces.eventhandlers;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import pe.com.agridron.field.domain.events.FarmDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.FarmRegisteredEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorAssignedEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorRemovedEvent;
+import pe.com.agridron.field.interfaces.events.FarmDetailsUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmRegisteredIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmSupervisorAssignedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmSupervisorRemovedIntegrationEvent;
@@ -30,6 +32,11 @@ public class FarmIntegrationEventsHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(FarmRegisteredEvent event) {
         integrationEventPublisher.publish(FarmRegisteredIntegrationEvent.from(event));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(FarmDetailsUpdatedEvent event) {
+        integrationEventPublisher.publish(FarmDetailsUpdatedIntegrationEvent.from(event));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
