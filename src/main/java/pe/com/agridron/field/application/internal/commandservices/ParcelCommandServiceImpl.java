@@ -8,6 +8,8 @@ import pe.com.agridron.field.domain.model.commands.ChangeParcelStatusCommand;
 import pe.com.agridron.field.domain.model.commands.CreateParcelCommand;
 import pe.com.agridron.field.domain.model.commands.RedefineParcelGeometryCommand;
 import pe.com.agridron.field.domain.model.commands.UpdateParcelCommand;
+import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
+import pe.com.agridron.field.domain.ports.ParcelUsagePort;
 import pe.com.agridron.field.domain.repositories.CropRepository;
 import pe.com.agridron.field.domain.repositories.FarmRepository;
 import pe.com.agridron.field.domain.repositories.ParcelRepository;
@@ -24,14 +26,17 @@ public class ParcelCommandServiceImpl implements ParcelCommandService {
     private final ParcelRepository parcelRepository;
     private final FarmRepository farmRepository;
     private final CropRepository cropRepository;
+    private final ParcelUsagePort parcelUsagePort;
 
     public ParcelCommandServiceImpl(
             ParcelRepository parcelRepository,
             FarmRepository farmRepository,
-            CropRepository cropRepository) {
+            CropRepository cropRepository,
+            ParcelUsagePort parcelUsagePort) {
         this.parcelRepository = parcelRepository;
         this.farmRepository = farmRepository;
         this.cropRepository = cropRepository;
+        this.parcelUsagePort = parcelUsagePort;
     }
 
     @Override
@@ -101,6 +106,12 @@ public class ParcelCommandServiceImpl implements ParcelCommandService {
         var parcel = parcelRepository.findById(command.parcelId()).orElse(null);
         if (parcel == null) {
             return Result.failure(notFound("Parcel", command.parcelId()));
+        }
+        if (command.status() == ParcelStatus.INACTIVE
+                && parcelUsagePort.hasActiveMissions(parcel.getId())) {
+            return Result.failure(ApplicationError.invalidState(
+                    "Parcel",
+                    "Parcel %d has active missions and cannot be deactivated".formatted(parcel.getId())));
         }
 
         switch (command.status()) {

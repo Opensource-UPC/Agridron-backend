@@ -15,6 +15,7 @@ import pe.com.agridron.field.domain.model.commands.UpdateParcelCommand;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
+import pe.com.agridron.field.domain.ports.ParcelUsagePort;
 import pe.com.agridron.field.domain.repositories.CropRepository;
 import pe.com.agridron.field.domain.repositories.FarmRepository;
 import pe.com.agridron.field.domain.repositories.ParcelRepository;
@@ -41,6 +42,9 @@ class ParcelCommandServiceImplTest {
 
     @Mock
     private CropRepository cropRepository;
+
+    @Mock
+    private ParcelUsagePort parcelUsagePort;
 
     @InjectMocks
     private ParcelCommandServiceImpl service;
@@ -205,16 +209,30 @@ class ParcelCommandServiceImplTest {
     @Test
     void deactivatesParcel() {
         when(parcelRepository.findById(5L)).thenReturn(Optional.of(parcel(5L, ParcelStatus.ACTIVE)));
+        when(parcelUsagePort.hasActiveMissions(5L)).thenReturn(false);
         when(parcelRepository.save(any(Parcel.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = service.handle(new ChangeParcelStatusCommand(5L, ParcelStatus.INACTIVE));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.toOptional().orElseThrow().getStatus()).isEqualTo(ParcelStatus.INACTIVE);
+        verify(parcelUsagePort).hasActiveMissions(5L);
     }
 
     @Test
-    void activatesParcel() {
+    void rejectsDeactivationWhenParcelHasActiveMissions() {
+        when(parcelRepository.findById(5L)).thenReturn(Optional.of(parcel(5L, ParcelStatus.ACTIVE)));
+        when(parcelUsagePort.hasActiveMissions(5L)).thenReturn(true);
+
+        var result = service.handle(new ChangeParcelStatusCommand(5L, ParcelStatus.INACTIVE));
+
+        assertThat(result.isFailure()).isTrue();
+        assertThat(errorCode(result)).isEqualTo("PARCEL_INVALID_STATE");
+        verify(parcelRepository, never()).save(any(Parcel.class));
+    }
+
+    @Test
+    void activatesParcelWithoutCheckingMissionUsage() {
         when(parcelRepository.findById(5L)).thenReturn(Optional.of(parcel(5L, ParcelStatus.INACTIVE)));
         when(parcelRepository.save(any(Parcel.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -222,6 +240,7 @@ class ParcelCommandServiceImplTest {
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.toOptional().orElseThrow().getStatus()).isEqualTo(ParcelStatus.ACTIVE);
+        verify(parcelUsagePort, never()).hasActiveMissions(5L);
     }
 
     @Test
