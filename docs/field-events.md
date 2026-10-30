@@ -24,9 +24,11 @@ de payload deben ser aditivos.
 | `eventType` | Evento de dominio | Payload |
 |---|---|---|
 | `field.farm.registered` | `FarmRegisteredEvent` | `farmId`, `ownerId`, `name`, `location`, `department` |
+| `field.farm.details-updated` | `FarmDetailsUpdatedEvent` | `farmId`, `ownerId`, `name`, `location`, `department` |
 | `field.farm.supervisor-assigned` | `FarmSupervisorAssignedEvent` | `farmId`, `supervisorId` |
 | `field.farm.supervisor-removed` | `FarmSupervisorRemovedEvent` | `farmId`, `supervisorId` |
 | `field.parcel.registered` | `ParcelRegisteredEvent` | `parcelId`, `farmId`, `areaHectares` |
+| `field.parcel.details-updated` | `ParcelDetailsUpdatedEvent` | `parcelId`, `farmId`, `name` |
 | `field.parcel.geometry-updated` | `ParcelGeometryUpdatedEvent` | `parcelId`, `farmId`, `areaHectares` |
 | `field.parcel.crop-information-registered` | `ParcelCropInformationRegisteredEvent` | `parcelId`, `farmId`, `cropId`, `phenologicalStage` |
 | `field.parcel.status-changed` | `ParcelStatusChangedEvent` | `parcelId`, `farmId`, `status` |
@@ -34,6 +36,12 @@ de payload deben ser aditivos.
 
 `status` y `phenologicalStage` viajan como el nombre del enum (`ACTIVE`, `INACTIVE`,
 `VEGETATIVE`, `FLOWERING`, …) para desacoplar a los consumidores de los enums de Field.
+
+Los eventos `details-updated` se publican **solo cuando el valor cambia**. Una petición
+idempotente con los mismos datos —incluidos espacios sobrantes que la normalización elimina— no
+emite evento. Una misma actualización de parcela puede emitir más de un evento: si cambian el
+nombre y la información del cultivo, se publican `field.parcel.details-updated` y
+`field.parcel.crop-information-registered`, en ese orden.
 
 ## Publicación
 

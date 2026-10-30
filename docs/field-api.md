@@ -91,7 +91,8 @@ Devuelve la finca o `404 FARM_NOT_FOUND`.
 ### `PUT /api/v1/farms/{farmId}`
 
 Reemplaza `name`, `location` y `department`. Mismas validaciones que la creación; el
-`ownerId` no se modifica. Responde `200`, `400`, `404` o `409`.
+`ownerId` no se modifica. Responde `200`, `400`, `404` o `409`. Si algún dato cambia, publica
+`field.farm.details-updated` (ver [`field-events.md`](field-events.md)).
 
 ### `POST /api/v1/farms/{farmId}/supervisors`
 
@@ -216,7 +217,9 @@ dedicado.
 { "name": "Lote 2", "cropId": 2, "phenologicalStage": "FLOWERING" }
 ```
 
-Responde `200`, `400`, `404` (parcela o cultivo) o `409`.
+Responde `200`, `400`, `404` (parcela o cultivo) o `409`. Si cambia el nombre, publica
+`field.parcel.details-updated`; si cambia el cultivo o la etapa fenológica, publica
+`field.parcel.crop-information-registered`. Una misma petición puede emitir ambos eventos.
 
 ### `PUT /api/v1/parcels/{parcelId}/geometry`
 
@@ -231,6 +234,10 @@ El cuerpo es directamente el GeoJSON `Polygon`. Recalcula `areaHectares` y respo
 
 `ACTIVE` o `INACTIVE`. Las transiciones repetidas son idempotentes. Responde `200`, `400` o
 `404`.
+
+La desactivación se bloquea con `422 PARCEL_INVALID_STATE` cuando la parcela participa en al
+menos una misión activa. La activación siempre se permite. El estado de las misiones lo aporta
+`ParcelUsagePort`; ver [`ADR-010`](adrs/ADR-010-parcel-usage-port.md).
 
 ---
 
@@ -325,6 +332,7 @@ los `*_CONFLICT`, `/api/v1/errors/conflict`. El `code` siempre identifica el rec
 | `FUMIGATION_AREA_NOT_FOUND` | 404 | `/api/v1/errors/not-found` | Área de fumigación inexistente |
 | `FARM_CONFLICT` | 409 | `/api/v1/errors/conflict` | Nombre de finca duplicado para el dueño |
 | `PARCEL_CONFLICT` | 409 | `/api/v1/errors/conflict` | Nombre de parcela duplicado en la finca |
+| `PARCEL_INVALID_STATE` | 422 | `/api/v1/errors/business-rule-violation` | Desactivación de una parcela con misiones activas |
 | `BUSINESS_RULE_VIOLATION` | 422 | `/api/v1/errors/business-rule-violation` | Área de fumigación fuera de la parcela |
 | `UNEXPECTED_ERROR` | 500 | `/api/v1/errors/unexpected-error` | Fallo no controlado (sin filtrar detalles internos) |
 
@@ -384,8 +392,14 @@ Accept-Language: es
 - **Búsqueda global:** `GET /api/v1/parcels` sin `farmId` recorre todas las fincas.
 - **Sin paginación:** los listados devuelven todos los elementos.
 - **Sin borrado:** no se exponen endpoints `DELETE` de fincas, parcelas, áreas ni cultivos.
-- **Sin eventos de integración:** los eventos de dominio se registran, pero todavía no se
-  traducen ni publican fuera del BC.
+- **Integración saliente in-process:** Field publica diez eventos de integración descritos en
+  [`field-events.md`](field-events.md), con entrega *after-commit* y *at-most-once*. Todavía no
+  hay outbox, reintentos ni consumidores reales.
+- **Uso de parcelas simulado:** `ParcelUsagePort` se implementa con un adaptador temporal que
+  siempre responde que no hay misiones activas. Flight Operations deberá sustituirlo por el
+  adaptador real; hasta entonces la salvaguarda `PARCEL_INVALID_STATE` está implementada y
+  probada, pero no puede dispararse en producción (ver
+  [`ADR-010`](adrs/ADR-010-parcel-usage-port.md)).
 
 ## Pruebas
 
@@ -395,8 +409,13 @@ Accept-Language: es
 
 # Flujo E2E completo con PostGIS
 ./mvnw -Dtest='FieldManagementE2ETest' test
+
+# Catálogo de eventos after-commit y salvaguarda de uso de parcelas
+./mvnw -Dtest='FieldIntegrationEventsE2ETest,ParcelUsageE2ETest' test
 ```
 
 `FieldManagementE2ETest` recorre alta y edición de finca, supervisores, parcela, geometría,
 estado, área de fumigación y catálogo de cultivos, y verifica las respuestas RFC 9457 para
-peticiones inválidas.
+peticiones inválidas. `FieldIntegrationEventsE2ETest` comprueba que el catálogo completo se
+publica solo después del commit y que un rollback no emite nada. `ParcelUsageE2ETest` simula
+misiones activas mediante `@MockitoBean` para verificar el `422 PARCEL_INVALID_STATE`.

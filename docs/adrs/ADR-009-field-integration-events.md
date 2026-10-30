@@ -22,8 +22,8 @@ dependencias o a duplicar el contrato.
 
 ## Decisión
 
-- Field publica **ocho eventos de integración**, uno por cada evento de dominio existente, en
-  `field.interfaces.events`. El catálogo y los payloads están en
+- Field publica **un evento de integración por cada evento de dominio**, en
+  `field.interfaces.events`. El catálogo vigente y los payloads están en
   [`docs/field-events.md`](../field-events.md).
 - Cada evento es un `record` inmutable que implementa `IntegrationEvent` y expone:
   - `eventId`: UUID generado por instancia al traducir.
