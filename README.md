@@ -56,6 +56,8 @@ src/main/java/pe/com/agridron
 │   ├── application                 # command/query services
 │   ├── domain                      # agregados, value objects, eventos, repositorios
 │   ├── infrastructure/persistence  # entidades JPA y adaptadores
+│   ├── interfaces/eventhandlers    # traducción dominio → evento de integración
+│   ├── interfaces/events           # eventos de integración publicados
 │   └── interfaces/rest             # controladores, resources y assemblers
 └── shared
     ├── application/result          # Result<T, E> y ApplicationError
@@ -65,7 +67,7 @@ src/main/java/pe/com/agridron
     ├── infrastructure
     │   ├── concurrency             # Virtual threads
     │   ├── documentation           # OpenAPI
-    │   ├── events                  # DomainEventPublisher
+    │   ├── events                  # DomainEventPublisher / IntegrationEventPublisher
     │   ├── i18n                    # LocaleResolver
     │   ├── persistence/jpa         # Entidades base, auditoría, naming strategy
     │   └── web                     # CORS
@@ -94,8 +96,9 @@ Antes de escribir código en un bounded context, lee
 Decisiones de arquitectura registradas en [`docs/adrs`](docs/adrs).
 
 El mapeo de persistencia de Field Management está en
-[`docs/field-persistence.md`](docs/field-persistence.md) y su contrato HTTP en
-[`docs/field-api.md`](docs/field-api.md).
+[`docs/field-persistence.md`](docs/field-persistence.md), su contrato HTTP en
+[`docs/field-api.md`](docs/field-api.md) y su catálogo de eventos de integración en
+[`docs/field-events.md`](docs/field-events.md).
 
 ## Ramas
 

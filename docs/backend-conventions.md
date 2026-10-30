@@ -232,9 +232,17 @@ La estrategia `SnakeCasePhysicalNamingStrategy` aplica la conversión automátic
 
 ### 7.2 Eventos de integración
 
-- Viven en `<bc>.interfaces.events`.
+- Viven en `<bc>.interfaces.events` y son `record` inmutables.
 - Implementan `IntegrationEvent` (`eventId`, `occurredOn`, `eventType`).
-- Se producen traduciendo un evento de dominio en `application/internal/eventhandlers`.
+- `eventId` es un UUID único por instancia, `occurredOn` se fija al traducir y `eventType` es
+  una constante estable con el formato `<bc>.<agregado>.<accion-en-pasado>`.
+- Se producen traduciendo un evento de dominio en `<bc>.interfaces.eventhandlers` con
+  `@TransactionalEventListener(phase = AFTER_COMMIT)`.
+- La traducción vive en `interfaces` porque es un adaptador de entrada y `application` no puede
+  depender de `interfaces` ni de `infrastructure` (regla ArchUnit). Ver
+  [`ADR-009`](adrs/ADR-009-field-integration-events.md).
+- Los consumidores deben ser idempotentes por `eventId`.
+- Sin outbox, la entrega es in-process, after-commit y *at-most-once*.
 - **Ningún BC consume eventos de dominio de otro BC.**
 
 ---
