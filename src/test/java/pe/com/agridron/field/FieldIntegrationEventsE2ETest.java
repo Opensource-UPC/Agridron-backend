@@ -17,6 +17,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import pe.com.agridron.field.application.commandservices.FarmCommandService;
 import pe.com.agridron.field.domain.model.commands.CreateFarmCommand;
+import pe.com.agridron.field.interfaces.events.FarmDetailsUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmRegisteredIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmSupervisorAssignedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FarmSupervisorRemovedIntegrationEvent;
@@ -106,6 +107,12 @@ class FieldIntegrationEventsE2ETest extends AbstractPostgisIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
+        mockMvc.perform(put("/api/v1/farms/{farmId}", farmId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(farmJson("Finca Eventos Actualizada"))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
         long parcelId = readId(mockMvc.perform(post("/api/v1/parcels")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(parcelJson(
@@ -150,6 +157,7 @@ class FieldIntegrationEventsE2ETest extends AbstractPostgisIntegrationTest {
                         "field.farm.registered",
                         "field.farm.supervisor-assigned",
                         "field.farm.supervisor-removed",
+                        "field.farm.details-updated",
                         "field.parcel.registered",
                         "field.parcel.crop-information-registered",
                         "field.parcel.details-updated",
@@ -182,6 +190,15 @@ class FieldIntegrationEventsE2ETest extends AbstractPostgisIntegrationTest {
                 .satisfies(event -> {
                     assertThat(event.farmId()).isEqualTo(farmId);
                     assertThat(event.supervisorId()).isEqualTo(SUPERVISOR_ID);
+                });
+
+        assertThat(applicationEvents.stream(FarmDetailsUpdatedIntegrationEvent.class))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.farmId()).isEqualTo(farmId);
+                    assertThat(event.ownerId()).isEqualTo(OWNER_ID);
+                    assertThat(event.name()).isEqualTo("Finca Eventos Actualizada");
+                    assertThat(event.location()).isEqualTo("Lurín, Lima");
                 });
 
         assertThat(applicationEvents.stream(ParcelRegisteredIntegrationEvent.class))
