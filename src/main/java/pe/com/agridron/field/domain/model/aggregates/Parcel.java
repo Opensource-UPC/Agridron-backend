@@ -116,7 +116,7 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
             return;
         }
         this.status = ParcelStatus.INACTIVE;
-        registerDomainEvent(new ParcelStatusChangedEvent(id, status));
+        registerDomainEvent(new ParcelStatusChangedEvent(id, farmId, status));
     }
 
     /**
@@ -127,7 +127,7 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
             return;
         }
         this.status = ParcelStatus.ACTIVE;
-        registerDomainEvent(new ParcelStatusChangedEvent(id, status));
+        registerDomainEvent(new ParcelStatusChangedEvent(id, farmId, status));
     }
 
     private void applyCropInformation(Long cropId, PhenologicalStage phenologicalStage) {

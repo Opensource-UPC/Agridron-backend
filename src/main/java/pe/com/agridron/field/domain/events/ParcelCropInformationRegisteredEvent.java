@@ -8,12 +8,14 @@ import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
  */
 public record ParcelCropInformationRegisteredEvent(
         Long parcelId,
+        Long farmId,
         Long cropId,
         PhenologicalStage phenologicalStage) {
 
     public static ParcelCropInformationRegisteredEvent from(Parcel parcel) {
         return new ParcelCropInformationRegisteredEvent(
                 parcel.getId(),
+                parcel.getFarmId(),
                 parcel.getCropId(),
                 parcel.getPhenologicalStage());
     }

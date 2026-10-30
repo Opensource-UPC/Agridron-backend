@@ -111,6 +111,7 @@ class ParcelTest {
         assertThat(parcel.domainEvents()).singleElement()
                 .isInstanceOfSatisfying(ParcelGeometryUpdatedEvent.class, event -> {
                     assertThat(event.parcelId()).isEqualTo(5L);
+                    assertThat(event.farmId()).isEqualTo(1L);
                     assertThat(event.areaHectares()).isEqualTo(parcel.getGeometry().areaHectares());
                 });
     }
@@ -127,6 +128,7 @@ class ParcelTest {
         assertThat(parcel.domainEvents()).singleElement()
                 .isInstanceOfSatisfying(ParcelCropInformationRegisteredEvent.class, event -> {
                     assertThat(event.parcelId()).isEqualTo(5L);
+                    assertThat(event.farmId()).isEqualTo(1L);
                     assertThat(event.cropId()).isEqualTo(2L);
                     assertThat(event.phenologicalStage()).isEqualTo(PhenologicalStage.FLOWERING);
                 });
@@ -165,6 +167,7 @@ class ParcelTest {
         assertThat(parcel.domainEvents()).singleElement()
                 .isInstanceOfSatisfying(ParcelStatusChangedEvent.class, event -> {
                     assertThat(event.parcelId()).isEqualTo(5L);
+                    assertThat(event.farmId()).isEqualTo(1L);
                     assertThat(event.status()).isEqualTo(ParcelStatus.INACTIVE);
                 });
     }
@@ -186,8 +189,10 @@ class ParcelTest {
 
         assertThat(parcel.getStatus()).isEqualTo(ParcelStatus.ACTIVE);
         assertThat(parcel.domainEvents()).singleElement()
-                .isInstanceOfSatisfying(ParcelStatusChangedEvent.class, event ->
-                        assertThat(event.status()).isEqualTo(ParcelStatus.ACTIVE));
+                .isInstanceOfSatisfying(ParcelStatusChangedEvent.class, event -> {
+                    assertThat(event.farmId()).isEqualTo(1L);
+                    assertThat(event.status()).isEqualTo(ParcelStatus.ACTIVE);
+                });
     }
 
     @Test

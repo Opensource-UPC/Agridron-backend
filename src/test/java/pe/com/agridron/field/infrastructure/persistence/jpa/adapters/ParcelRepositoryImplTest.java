@@ -72,6 +72,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
                 .singleElement()
                 .satisfies(event -> {
                     assertThat(event.parcelId()).isEqualTo(saved.getId());
+                    assertThat(event.farmId()).isEqualTo(farmId);
                     assertThat(event.cropId()).isEqualTo(cropId);
                     assertThat(event.phenologicalStage()).isEqualTo(PhenologicalStage.VEGETATIVE);
                 });
@@ -106,6 +107,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
                 .singleElement()
                 .satisfies(event -> {
                     assertThat(event.parcelId()).isEqualTo(saved.getId());
+                    assertThat(event.farmId()).isEqualTo(farmId);
                     assertThat(event.areaHectares()).isEqualTo(newGeometry.areaHectares());
                 });
     }
@@ -124,6 +126,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
                 .singleElement()
                 .satisfies(event -> {
                     assertThat(event.parcelId()).isEqualTo(saved.getId());
+                    assertThat(event.farmId()).isEqualTo(farmId);
                     assertThat(event.status()).isEqualTo(ParcelStatus.INACTIVE);
                 });
     }

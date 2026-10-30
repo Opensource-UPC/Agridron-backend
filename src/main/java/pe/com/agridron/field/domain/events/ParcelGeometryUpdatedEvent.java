@@ -7,9 +7,12 @@ import java.math.BigDecimal;
 /**
  * Raised when the boundary of a parcel changes and its area is recalculated.
  */
-public record ParcelGeometryUpdatedEvent(Long parcelId, BigDecimal areaHectares) {
+public record ParcelGeometryUpdatedEvent(Long parcelId, Long farmId, BigDecimal areaHectares) {
 
     public static ParcelGeometryUpdatedEvent from(Parcel parcel) {
-        return new ParcelGeometryUpdatedEvent(parcel.getId(), parcel.getGeometry().areaHectares());
+        return new ParcelGeometryUpdatedEvent(
+                parcel.getId(),
+                parcel.getFarmId(),
+                parcel.getGeometry().areaHectares());
     }
 }
