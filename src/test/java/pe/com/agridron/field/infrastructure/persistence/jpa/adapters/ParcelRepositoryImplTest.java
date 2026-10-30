@@ -8,6 +8,7 @@ import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import pe.com.agridron.field.domain.TestGeometries;
 import pe.com.agridron.field.domain.events.ParcelCropInformationRegisteredEvent;
+import pe.com.agridron.field.domain.events.ParcelDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelGeometryUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelRegisteredEvent;
 import pe.com.agridron.field.domain.events.ParcelStatusChangedEvent;
@@ -109,6 +110,25 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
                     assertThat(event.parcelId()).isEqualTo(saved.getId());
                     assertThat(event.farmId()).isEqualTo(farmId);
                     assertThat(event.areaHectares()).isEqualTo(newGeometry.areaHectares());
+                });
+    }
+
+    @Test
+    void updatingDetailsPublishesEvent() {
+        var farmId = persistFarm();
+        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        var parcel = parcelRepository.findById(saved.getId()).orElseThrow();
+
+        parcel.updateDetails("Lote 1 Actualizado", null, null);
+        var updated = parcelRepository.save(parcel);
+
+        assertThat(updated.getName()).isEqualTo("Lote 1 Actualizado");
+        assertThat(applicationEvents.stream(ParcelDetailsUpdatedEvent.class))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.parcelId()).isEqualTo(saved.getId());
+                    assertThat(event.farmId()).isEqualTo(farmId);
+                    assertThat(event.name()).isEqualTo("Lote 1 Actualizado");
                 });
     }
 

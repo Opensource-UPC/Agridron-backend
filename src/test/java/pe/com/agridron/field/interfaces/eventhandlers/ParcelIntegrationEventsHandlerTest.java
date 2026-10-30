@@ -3,12 +3,14 @@ package pe.com.agridron.field.interfaces.eventhandlers;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import pe.com.agridron.field.domain.events.ParcelCropInformationRegisteredEvent;
+import pe.com.agridron.field.domain.events.ParcelDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelGeometryUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelRegisteredEvent;
 import pe.com.agridron.field.domain.events.ParcelStatusChangedEvent;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
 import pe.com.agridron.field.interfaces.events.ParcelCropInformationRegisteredIntegrationEvent;
+import pe.com.agridron.field.interfaces.events.ParcelDetailsUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelGeometryUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelRegisteredIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelStatusChangedIntegrationEvent;
@@ -37,6 +39,19 @@ class ParcelIntegrationEventsHandlerTest {
                     assertThat(integrationEvent.parcelId()).isEqualTo(5L);
                     assertThat(integrationEvent.farmId()).isEqualTo(1L);
                     assertThat(integrationEvent.areaHectares()).isEqualByComparingTo("2.50");
+                });
+    }
+
+    @Test
+    void publishesParcelDetailsUpdatedIntegrationEvent() {
+        handler.on(new ParcelDetailsUpdatedEvent(5L, 1L, "Lote 1 Actualizado"));
+
+        var event = capturePublished();
+        assertThat(event).isInstanceOfSatisfying(
+                ParcelDetailsUpdatedIntegrationEvent.class, integrationEvent -> {
+                    assertThat(integrationEvent.parcelId()).isEqualTo(5L);
+                    assertThat(integrationEvent.farmId()).isEqualTo(1L);
+                    assertThat(integrationEvent.name()).isEqualTo("Lote 1 Actualizado");
                 });
     }
 

@@ -2,6 +2,7 @@ package pe.com.agridron.field.domain.model.aggregates;
 
 import lombok.Getter;
 import pe.com.agridron.field.domain.events.ParcelCropInformationRegisteredEvent;
+import pe.com.agridron.field.domain.events.ParcelDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelGeometryUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelRegisteredEvent;
 import pe.com.agridron.field.domain.events.ParcelStatusChangedEvent;
@@ -90,7 +91,13 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
      * A crop information event is registered only when the crop actually changes.
      */
     public void updateDetails(String name, Long cropId, PhenologicalStage phenologicalStage) {
-        this.name = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
+        var newName = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
+        var nameChanged = !Objects.equals(this.name, newName);
+        this.name = newName;
+        if (nameChanged) {
+            registerDomainEvent(ParcelDetailsUpdatedEvent.from(this));
+        }
+
         var cropChanged = !Objects.equals(this.cropId, cropId) || this.phenologicalStage != phenologicalStage;
         if (cropChanged) {
             applyCropInformation(cropId, phenologicalStage);

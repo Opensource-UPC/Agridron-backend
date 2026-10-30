@@ -22,6 +22,7 @@ import pe.com.agridron.field.interfaces.events.FarmSupervisorAssignedIntegration
 import pe.com.agridron.field.interfaces.events.FarmSupervisorRemovedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.FumigationAreaDelimitedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelCropInformationRegisteredIntegrationEvent;
+import pe.com.agridron.field.interfaces.events.ParcelDetailsUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelGeometryUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelRegisteredIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelStatusChangedIntegrationEvent;
@@ -151,6 +152,7 @@ class FieldIntegrationEventsE2ETest extends AbstractPostgisIntegrationTest {
                         "field.farm.supervisor-removed",
                         "field.parcel.registered",
                         "field.parcel.crop-information-registered",
+                        "field.parcel.details-updated",
                         "field.parcel.crop-information-registered",
                         "field.parcel.geometry-updated",
                         "field.parcel.status-changed",
@@ -188,6 +190,14 @@ class FieldIntegrationEventsE2ETest extends AbstractPostgisIntegrationTest {
                     assertThat(event.parcelId()).isEqualTo(parcelId);
                     assertThat(event.farmId()).isEqualTo(farmId);
                     assertThat(event.areaHectares()).isPositive();
+                });
+
+        assertThat(applicationEvents.stream(ParcelDetailsUpdatedIntegrationEvent.class))
+                .singleElement()
+                .satisfies(event -> {
+                    assertThat(event.parcelId()).isEqualTo(parcelId);
+                    assertThat(event.farmId()).isEqualTo(farmId);
+                    assertThat(event.name()).isEqualTo("Lote Eventos Actualizado");
                 });
 
         var cropInformationEvents = applicationEvents

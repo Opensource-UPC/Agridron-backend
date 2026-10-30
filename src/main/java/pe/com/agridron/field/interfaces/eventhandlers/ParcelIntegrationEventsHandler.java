@@ -4,10 +4,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import pe.com.agridron.field.domain.events.ParcelCropInformationRegisteredEvent;
+import pe.com.agridron.field.domain.events.ParcelDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelGeometryUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelRegisteredEvent;
 import pe.com.agridron.field.domain.events.ParcelStatusChangedEvent;
 import pe.com.agridron.field.interfaces.events.ParcelCropInformationRegisteredIntegrationEvent;
+import pe.com.agridron.field.interfaces.events.ParcelDetailsUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelGeometryUpdatedIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelRegisteredIntegrationEvent;
 import pe.com.agridron.field.interfaces.events.ParcelStatusChangedIntegrationEvent;
@@ -31,6 +33,11 @@ public class ParcelIntegrationEventsHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(ParcelRegisteredEvent event) {
         integrationEventPublisher.publish(ParcelRegisteredIntegrationEvent.from(event));
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void on(ParcelDetailsUpdatedEvent event) {
+        integrationEventPublisher.publish(ParcelDetailsUpdatedIntegrationEvent.from(event));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)

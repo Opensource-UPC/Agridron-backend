@@ -3,6 +3,7 @@ package pe.com.agridron.field.domain.model.aggregates;
 import org.junit.jupiter.api.Test;
 import pe.com.agridron.field.domain.TestGeometries;
 import pe.com.agridron.field.domain.events.ParcelCropInformationRegisteredEvent;
+import pe.com.agridron.field.domain.events.ParcelDetailsUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelGeometryUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelRegisteredEvent;
 import pe.com.agridron.field.domain.events.ParcelStatusChangedEvent;
@@ -120,9 +121,9 @@ class ParcelTest {
     void updatesCropAndRegistersCropInformationEvent() {
         var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null);
 
-        parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING);
+        parcel.updateDetails("Lote", 2L, PhenologicalStage.FLOWERING);
 
-        assertThat(parcel.getName()).isEqualTo("Lote 1");
+        assertThat(parcel.getName()).isEqualTo("Lote");
         assertThat(parcel.getCropId()).isEqualTo(2L);
         assertThat(parcel.getPhenologicalStage()).isEqualTo(PhenologicalStage.FLOWERING);
         assertThat(parcel.domainEvents()).singleElement()
@@ -135,13 +136,40 @@ class ParcelTest {
     }
 
     @Test
-    void updatingOnlyTheNameDoesNotRegisterCropInformationEvent() {
+    void updatingOnlyTheNameRegistersDetailsEvent() {
         var parcel = Parcel.reconstitute(
                 5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING);
 
         parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING);
 
         assertThat(parcel.getName()).isEqualTo("Lote 1");
+        assertThat(parcel.domainEvents()).singleElement()
+                .isInstanceOfSatisfying(ParcelDetailsUpdatedEvent.class, event -> {
+                    assertThat(event.parcelId()).isEqualTo(5L);
+                    assertThat(event.farmId()).isEqualTo(1L);
+                    assertThat(event.name()).isEqualTo("Lote 1");
+                });
+    }
+
+    @Test
+    void updatingNameAndCropRegistersBothEvents() {
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null);
+
+        parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING);
+
+        assertThat(parcel.domainEvents())
+                .hasExactlyElementsOfTypes(
+                        ParcelDetailsUpdatedEvent.class,
+                        ParcelCropInformationRegisteredEvent.class);
+    }
+
+    @Test
+    void updatingWithTheSameDataRegistersNoEvents() {
+        var parcel = Parcel.reconstitute(
+                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING);
+
+        parcel.updateDetails(" Lote ", 2L, PhenologicalStage.FLOWERING);
+
         assertThat(parcel.domainEvents()).isEmpty();
     }
 
