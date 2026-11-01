@@ -147,6 +147,15 @@ categoría.
 - Éxito: `Result` → `ResponseEntityAssembler`.
 - Error: siempre RFC 9457 (`application/problem+json`).
 - Nunca devolver entidades JPA ni agregados de dominio directamente.
+- Listados: paginación **opt-in**. Sin `page` ni `size` se mantiene el array JSON; con
+  cualquiera de ellos se devuelve un sobre `PageResource` (`content`, `page`, `size`,
+  `totalElements`, `totalPages`, `first`, `last`).
+- `page` es base 0 y `size` va de 1 a 100 (por defecto 20). `sort` acepta `campo` o
+  `campo,asc|desc`, con un solo campo y `asc` por defecto. Cada endpoint declara una lista
+  blanca de campos ordenables y un desempate estable por `id`.
+- Las primitivas de paginación (`Pagination`, `SortOrder`, `PageResult`) viven en el dominio
+  del BC; los puertos no exponen tipos de Spring Data. Ver
+  [`ADR-011`](adrs/ADR-011-opt-in-pagination.md).
 
 Ejemplo de controlador:
 

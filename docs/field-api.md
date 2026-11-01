@@ -49,6 +49,49 @@ El contrato OpenAPI generado está disponible en `/v3/api-docs` y en Swagger UI
 
 ---
 
+## Paginación y orden
+
+Los listados son **opt-in**: sin `page` ni `size` devuelven el array JSON de siempre
+(compatibilidad con los clientes actuales). Si se envía cualquiera de los dos, la respuesta
+pasa a ser un sobre:
+
+```json
+{
+  "content": [ { "id": 1, "name": "Finca El Sol" } ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 42,
+  "totalPages": 3,
+  "first": true,
+  "last": false
+}
+```
+
+| Parámetro | Tipo | Por defecto | Reglas |
+|---|---|---|---|
+| `page` | entero | `0` | Base 0, no negativo |
+| `size` | entero | `20` | Entre `1` y `100` |
+| `sort` | texto | según endpoint | `campo` o `campo,asc\|desc` |
+
+- Un solo campo de orden por petición; la dirección por defecto es `asc`.
+- El campo se resuelve sin distinguir mayúsculas (`areaHectares` o `areahectares`).
+- Si el campo ordenado no es `id`, se añade `id` como desempate estable.
+- Un `sort` no soportado, una dirección inválida o `page`/`size` fuera de rango responden
+  `400 VALIDATION_ERROR`.
+- El sobre se aplica igual a todos los listados; el orden por defecto de cada endpoint se
+  mantiene cuando no se envía `sort`.
+
+Campos ordenables por endpoint:
+
+| Endpoint | Campos | Orden por defecto |
+|---|---|---|
+| `GET /api/v1/farms` | `id`, `name`, `location`, `department` | `name,asc` |
+| `GET /api/v1/parcels` | `id`, `name`, `farmId`, `cropId`, `status`, `areaHectares`, `phenologicalStage` | `name,asc` |
+| `GET /api/v1/fumigation-areas` | `id`, `areaHectares` | `id,asc` |
+| `GET /api/v1/crops` | `id`, `name`, `variety` | `name,asc` |
+
+---
+
 ## Fincas
 
 ### `POST /api/v1/farms`
@@ -81,8 +124,9 @@ Validaciones: `ownerId` positivo; `name` (máx. 120), `location` (máx. 255) y `
 
 ### `GET /api/v1/farms?ownerId={ownerId}`
 
-Devuelve las fincas del dueño ordenadas por nombre. `ownerId` es obligatorio
-(`400 VALIDATION_ERROR` si falta).
+Devuelve las fincas del dueño. `ownerId` es obligatorio (`400 VALIDATION_ERROR` si falta).
+Sin `page`/`size` responde un array ordenado por nombre; con cualquiera de ellos responde el
+sobre paginado descrito en [Paginación y orden](#paginación-y-orden).
 
 ### `GET /api/v1/farms/{farmId}`
 
@@ -196,9 +240,14 @@ Filtros opcionales combinados con `AND`, todos por query string:
 | `cropId` | `Long` positivo | `2` |
 | `minAreaHectares` | decimal ≥ 0 | `0.5` |
 | `maxAreaHectares` | decimal ≥ 0 | `10` |
+| `page` | entero ≥ 0 | `0` |
+| `size` | entero 1–100 | `20` |
+| `sort` | `campo[,asc\|desc]` | `name,asc` |
 
 Sin filtros devuelve todas las parcelas. `minAreaHectares > maxAreaHectares` responde
-`400 VALIDATION_ERROR`. El resultado se ordena por nombre e ID.
+`400 VALIDATION_ERROR`. Sin `page`/`size` el resultado es un array ordenado por nombre e ID;
+con cualquiera de ellos se devuelve el sobre paginado descrito en
+[Paginación y orden](#paginación-y-orden).
 
 > **Limitación MVP:** al no existir IAM todavía, `GET /api/v1/parcels` sin `farmId` devuelve
 > parcelas de todas las fincas. Los clientes deben enviar `farmId`; IAM restringirá el
@@ -272,7 +321,9 @@ Errores: `400` (datos o geometría), `404 PARCEL_NOT_FOUND`, `422` (fuera de la 
 ### `GET /api/v1/fumigation-areas?parcelId={parcelId}`
 
 Lista las áreas de la parcela. `parcelId` es obligatorio (`400 VALIDATION_ERROR` si falta) y
-la parcela debe existir (`404 PARCEL_NOT_FOUND`).
+la parcela debe existir (`404 PARCEL_NOT_FOUND`). Sin `page`/`size` responde un array ordenado
+por ID; con cualquiera de ellos responde el sobre paginado descrito en
+[Paginación y orden](#paginación-y-orden).
 
 ### `GET /api/v1/fumigation-areas/{fumigationAreaId}`
 
@@ -291,6 +342,9 @@ Catálogo de solo lectura sembrado por Flyway (`V205`) con once cultivos. No se 
 endpoints de escritura.
 
 ### `GET /api/v1/crops`
+
+Sin `page`/`size` devuelve el catálogo completo como array; con cualquiera de ellos devuelve
+el sobre paginado descrito en [Paginación y orden](#paginación-y-orden).
 
 ```json
 [
@@ -390,7 +444,6 @@ Accept-Language: es
 - **Sin IAM:** `ownerId` viaja en el body/query y no se valida contra usuarios reales.
   Tampoco se validan los `supervisorId`; ambos son IDs opacos hasta integrar IAM.
 - **Búsqueda global:** `GET /api/v1/parcels` sin `farmId` recorre todas las fincas.
-- **Sin paginación:** los listados devuelven todos los elementos.
 - **Sin borrado:** no se exponen endpoints `DELETE` de fincas, parcelas, áreas ni cultivos.
 - **Integración saliente in-process:** Field publica diez eventos de integración descritos en
   [`field-events.md`](field-events.md), con entrega *after-commit* y *at-most-once*. Todavía no
@@ -416,6 +469,8 @@ Accept-Language: es
 
 `FieldManagementE2ETest` recorre alta y edición de finca, supervisores, parcela, geometría,
 estado, área de fumigación y catálogo de cultivos, y verifica las respuestas RFC 9457 para
-peticiones inválidas. `FieldIntegrationEventsE2ETest` comprueba que el catálogo completo se
+peticiones inválidas. También comprueba la compatibilidad del array legacy, la paginación y el
+orden de fincas, parcelas, áreas y cultivos, además de rechazar `page`, `size` y `sort`
+inválidos. `FieldIntegrationEventsE2ETest` comprueba que el catálogo completo se
 publica solo después del commit y que un rollback no emite nada. `ParcelUsageE2ETest` simula
 misiones activas mediante `@MockitoBean` para verificar el `422 PARCEL_INVALID_STATE`.
