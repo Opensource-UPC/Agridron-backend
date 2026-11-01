@@ -14,6 +14,7 @@ import pe.com.agridron.support.AbstractPostgisIntegrationTest;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -206,6 +207,162 @@ class FieldManagementE2ETest extends AbstractPostgisIntegrationTest {
                 .andExpect(jsonPath("$.code").value("PARCEL_NOT_FOUND"));
     }
 
+    @Test
+    void paginatesCollectionsAndKeepsTheLegacyContract() throws Exception {
+        long cropId = firstCropId();
+
+        createFarm("Finca Paging C");
+        createFarm("Finca Paging B");
+        var farmId = createFarm("Finca Paging A");
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", String.valueOf(OWNER_ID))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].name").value("Finca Paging A"))
+                .andExpect(jsonPath("$[2].name").value("Finca Paging C"));
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", String.valueOf(OWNER_ID))
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("sort", "name,desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].name").value("Finca Paging C"))
+                .andExpect(jsonPath("$.content[1].name").value("Finca Paging B"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", String.valueOf(OWNER_ID))
+                        .param("page", "1")
+                        .param("size", "2")
+                        .param("sort", "name,desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Finca Paging A"))
+                .andExpect(jsonPath("$.first").value(false))
+                .andExpect(jsonPath("$.last").value(true));
+
+        createParcel(farmId, cropId, "Lote Paging C", polygonJson(-77.070, -12.070, 0.01));
+        createParcel(farmId, cropId, "Lote Paging B", polygonJson(-77.060, -12.060, 0.01));
+        createParcel(farmId, cropId, "Lote Paging A", polygonJson(-77.050, -12.050, 0.01));
+
+        mockMvc.perform(get("/api/v1/parcels")
+                        .param("farmId", String.valueOf(farmId))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+
+        mockMvc.perform(get("/api/v1/parcels")
+                        .param("farmId", String.valueOf(farmId))
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("sort", "name,asc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].name").value("Lote Paging A"))
+                .andExpect(jsonPath("$.content[1].name").value("Lote Paging B"))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        var parcelsBody = mockMvc.perform(get("/api/v1/parcels")
+                                .param("farmId", String.valueOf(farmId))
+                                .param("page", "0")
+                                .param("size", "1")
+                                .param("sort", "name,asc")
+                                .accept(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.content", hasSize(1)))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(StandardCharsets.UTF_8);
+        var parcelId = ((Number) JsonPath.read(parcelsBody, "$.content[0].id")).longValue();
+
+        createArea(parcelId, polygonJson(-77.049, -12.049, 0.002));
+        createArea(parcelId, polygonJson(-77.047, -12.047, 0.003));
+        createArea(parcelId, polygonJson(-77.045, -12.045, 0.004));
+
+        var areasBody = mockMvc.perform(get("/api/v1/fumigation-areas")
+                                .param("parcelId", String.valueOf(parcelId))
+                                .param("page", "0")
+                                .param("size", "2")
+                                .param("sort", "areaHectares,desc")
+                                .accept(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.content", hasSize(2)))
+                        .andExpect(jsonPath("$.totalElements").value(3))
+                        .andExpect(jsonPath("$.totalPages").value(2))
+                        .andExpect(jsonPath("$.first").value(true))
+                        .andExpect(jsonPath("$.last").value(false))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(StandardCharsets.UTF_8);
+        Double firstArea = JsonPath.read(areasBody, "$.content[0].areaHectares");
+        Double secondArea = JsonPath.read(areasBody, "$.content[1].areaHectares");
+        assertThat(firstArea).isGreaterThan(secondArea);
+
+        mockMvc.perform(get("/api/v1/crops")
+                        .param("page", "0")
+                        .param("size", "3")
+                        .param("sort", "name,asc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.totalElements").value(11))
+                .andExpect(jsonPath("$.totalPages").value(4))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+    }
+
+    @Test
+    void rejectsInvalidPaginationAndSorting() throws Exception {
+        long farmId = createFarm("Finca Paginación Inválida");
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", String.valueOf(OWNER_ID))
+                        .param("size", "101")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", String.valueOf(OWNER_ID))
+                        .param("page", "-1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", String.valueOf(OWNER_ID))
+                        .param("sort", "ownerId")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/parcels")
+                        .param("farmId", String.valueOf(farmId))
+                        .param("sort", "name,sideways")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/crops")
+                        .param("page", "abc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
     private long firstCropId() throws Exception {
         var body = mockMvc.perform(get("/api/v1/crops").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -229,6 +386,17 @@ class FieldManagementE2ETest extends AbstractPostgisIntegrationTest {
         return readId(mockMvc.perform(post("/api/v1/parcels")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(parcelJson(farmId, name, cropId, geometry))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andReturn());
+    }
+
+    private long createArea(long parcelId, String geometry) throws Exception {
+        return readId(mockMvc.perform(post("/api/v1/fumigation-areas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"parcelId":%d,"geometry":%s}
+                                """.formatted(parcelId, geometry))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn());
