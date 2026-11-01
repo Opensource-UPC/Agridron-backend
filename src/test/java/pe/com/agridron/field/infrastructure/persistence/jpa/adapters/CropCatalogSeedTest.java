@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import pe.com.agridron.field.domain.model.aggregates.Crop;
+import pe.com.agridron.field.domain.model.queries.Pagination;
 import pe.com.agridron.field.support.AbstractFieldPersistenceTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +18,7 @@ class CropCatalogSeedTest extends AbstractFieldPersistenceTest {
 
     @Test
     void seedsTheExpectedCropCatalog() {
-        assertThat(cropRepository.findAll())
+        assertThat(cropRepository.findAll(Pagination.unpaged(), null).content())
                 .extracting(Crop::getName)
                 .contains(
                         "Café",
@@ -35,7 +36,7 @@ class CropCatalogSeedTest extends AbstractFieldPersistenceTest {
 
     @Test
     void seedsTheExpectedVarieties() {
-        assertThat(cropRepository.findAll())
+        assertThat(cropRepository.findAll(Pagination.unpaged(), null).content())
                 .extracting(Crop::getName, Crop::getVariety)
                 .contains(
                         tuple("Café", "Catimor"),
@@ -48,7 +49,7 @@ class CropCatalogSeedTest extends AbstractFieldPersistenceTest {
 
     @Test
     void catalogEntriesAreReadableById() {
-        var palta = cropRepository.findAll().stream()
+        var palta = cropRepository.findAll(Pagination.unpaged(), null).content().stream()
                 .filter(crop -> crop.getName().equals("Palta"))
                 .findFirst()
                 .orElseThrow();

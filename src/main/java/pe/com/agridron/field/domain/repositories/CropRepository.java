@@ -1,8 +1,10 @@
 package pe.com.agridron.field.domain.repositories;
 
 import pe.com.agridron.field.domain.model.aggregates.Crop;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,7 +14,7 @@ public interface CropRepository {
 
     Optional<Crop> findById(Long id);
 
-    List<Crop> findAll();
+    PageResult<Crop> findAll(Pagination pagination, SortOrder sortOrder);
 
     boolean existsById(Long id);
 }

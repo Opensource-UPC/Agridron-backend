@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import pe.com.agridron.field.domain.model.aggregates.Crop;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.infrastructure.persistence.jpa.entities.CropPersistenceEntity;
 import pe.com.agridron.field.support.AbstractFieldPersistenceTest;
 
@@ -43,9 +46,27 @@ class CropRepositoryImplTest extends AbstractFieldPersistenceTest {
         entityManager.persist(new CropPersistenceEntity("Cultivo B", "Variedad B"));
         entityManager.flush();
 
-        assertThat(cropRepository.findAll())
+        assertThat(cropRepository.findAll(Pagination.unpaged(), null).content())
                 .extracting(Crop::getName)
                 .contains("Cultivo A", "Cultivo B", "Café", "Papa", "Palta");
+    }
+
+    @Test
+    void paginatesAndOrdersTheCatalog() {
+        entityManager.persist(new CropPersistenceEntity("Zzz cultivo", "Variedad Z"));
+        entityManager.persist(new CropPersistenceEntity("Cultivo B", "Variedad B"));
+        entityManager.flush();
+
+        var page = cropRepository.findAll(
+                Pagination.of(0, 1),
+                new SortOrder("name", SortDirection.DESC));
+
+        assertThat(page.content()).extracting(Crop::getName).containsExactly("Zzz cultivo");
+        assertThat(page.page()).isZero();
+        assertThat(page.size()).isEqualTo(1);
+        assertThat(page.totalElements()).isEqualTo(13);
+        assertThat(page.totalPages()).isEqualTo(13);
+        assertThat(page.last()).isFalse();
     }
 
     @Test

@@ -8,6 +8,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pe.com.agridron.field.domain.model.aggregates.Crop;
 import pe.com.agridron.field.domain.model.queries.GetAllCropsQuery;
 import pe.com.agridron.field.domain.model.queries.GetCropByIdQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.repositories.CropRepository;
 import pe.com.agridron.shared.application.result.ApplicationError;
 
@@ -49,13 +53,28 @@ class CropQueryServiceImplTest {
 
     @Test
     void listsEveryCrop() {
-        when(cropRepository.findAll()).thenReturn(List.of(
+        when(cropRepository.findAll(Pagination.unpaged(), null)).thenReturn(PageResult.unpaged(List.of(
                 Crop.reconstitute(1L, "Café", "Catimor"),
-                Crop.reconstitute(2L, "Palta", "Hass")));
+                Crop.reconstitute(2L, "Palta", "Hass"))));
 
         var result = service.handle(new GetAllCropsQuery());
 
-        assertThat(result).extracting(Crop::getName).containsExactly("Café", "Palta");
-        verify(cropRepository).findAll();
+        assertThat(result.content()).extracting(Crop::getName).containsExactly("Café", "Palta");
+        verify(cropRepository).findAll(Pagination.unpaged(), null);
+    }
+
+    @Test
+    void delegatesPaginationAndOrdering() {
+        var pagination = Pagination.of(1, 1);
+        var sortOrder = new SortOrder("variety", SortDirection.DESC);
+        when(cropRepository.findAll(pagination, sortOrder))
+                .thenReturn(new PageResult<>(
+                        List.of(Crop.reconstitute(2L, "Palta", "Hass")), 1, 1, 2));
+
+        var result = service.handle(new GetAllCropsQuery(pagination, sortOrder));
+
+        assertThat(result.content()).extracting(Crop::getName).containsExactly("Palta");
+        assertThat(result.page()).isEqualTo(1);
+        assertThat(result.totalElements()).isEqualTo(2);
     }
 }

@@ -6,11 +6,10 @@ import pe.com.agridron.field.application.queryservices.CropQueryService;
 import pe.com.agridron.field.domain.model.aggregates.Crop;
 import pe.com.agridron.field.domain.model.queries.GetAllCropsQuery;
 import pe.com.agridron.field.domain.model.queries.GetCropByIdQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.field.domain.repositories.CropRepository;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Read-only implementation of the crop catalog query service.
@@ -34,7 +33,7 @@ public class CropQueryServiceImpl implements CropQueryService {
     }
 
     @Override
-    public List<Crop> handle(GetAllCropsQuery query) {
-        return cropRepository.findAll();
+    public PageResult<Crop> handle(GetAllCropsQuery query) {
+        return cropRepository.findAll(query.pagination(), query.sortOrder());
     }
 }

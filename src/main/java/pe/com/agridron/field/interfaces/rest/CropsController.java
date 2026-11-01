@@ -12,15 +12,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pe.com.agridron.field.application.queryservices.CropQueryService;
 import pe.com.agridron.field.domain.model.queries.GetAllCropsQuery;
 import pe.com.agridron.field.domain.model.queries.GetCropByIdQuery;
 import pe.com.agridron.field.interfaces.rest.resources.CropResource;
+import pe.com.agridron.field.interfaces.rest.transform.CollectionResponseAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.CropResourceFromEntityAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.PaginationFromRequestAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.SortOrderFromRequestAssembler;
 import pe.com.agridron.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller that exposes the read-only crop catalog.
@@ -30,6 +34,8 @@ import java.util.List;
 @Tag(name = "Crops", description = "Crop catalog endpoints")
 public class CropsController {
 
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "name", "variety");
+
     private final CropQueryService cropQueryService;
 
     public CropsController(CropQueryService cropQueryService) {
@@ -37,23 +43,38 @@ public class CropsController {
     }
 
     /**
-     * Lists every crop of the catalog.
+     * Lists the crops of the catalog.
      */
     @GetMapping
     @Operation(
             summary = "List crops",
-            description = "Retrieves every crop available in the read-only catalog.")
+            description = "Retrieves the crops available in the read-only catalog. Without page "
+                    + "or size it returns every crop; with page or size it returns a paged "
+                    + "envelope.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "Crops retrieved",
-                    content = @Content(schema = @Schema(implementation = CropResource.class)))
+                    content = @Content(schema = @Schema(implementation = CropResource.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
     })
-    public ResponseEntity<List<CropResource>> getAllCrops() {
-        var resources = cropQueryService.handle(new GetAllCropsQuery()).stream()
-                .map(CropResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
+    public ResponseEntity<?> getAllCrops(
+            @RequestParam(required = false)
+            @Parameter(description = "Zero-based page index", example = "0")
+            Integer page,
+            @RequestParam(required = false)
+            @Parameter(description = "Page size (1-100)", example = "20")
+            Integer size,
+            @RequestParam(required = false)
+            @Parameter(description = "Order as 'field' or 'field,asc|desc'", example = "name,asc")
+            String sort) {
+        var pagination = PaginationFromRequestAssembler.toPaginationFromRequest(page, size);
+        var sortOrder = SortOrderFromRequestAssembler.toSortOrderFromRequest(sort, SORTABLE_FIELDS);
+        var result = cropQueryService.handle(new GetAllCropsQuery(pagination, sortOrder));
+        return CollectionResponseAssembler.toResponseEntityFromPageResult(
+                result,
+                pagination.paged(),
+                CropResourceFromEntityAssembler::toResourceFromEntity);
     }
 
     /**

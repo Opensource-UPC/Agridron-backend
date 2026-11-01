@@ -3,10 +3,9 @@ package pe.com.agridron.field.application.queryservices;
 import pe.com.agridron.field.domain.model.aggregates.Crop;
 import pe.com.agridron.field.domain.model.queries.GetAllCropsQuery;
 import pe.com.agridron.field.domain.model.queries.GetCropByIdQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Application service that resolves read queries against the crop catalog.
@@ -22,10 +21,10 @@ public interface CropQueryService {
     Result<Crop, ApplicationError> handle(GetCropByIdQuery query);
 
     /**
-     * Lists every crop of the catalog.
+     * Lists the crops of the catalog.
      *
      * @param query the query
-     * @return the catalog, possibly empty
+     * @return the matching crops and pagination metadata, possibly empty
      */
-    List<Crop> handle(GetAllCropsQuery query);
+    PageResult<Crop> handle(GetAllCropsQuery query);
 }
