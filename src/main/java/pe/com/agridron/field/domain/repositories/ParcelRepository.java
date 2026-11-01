@@ -1,6 +1,7 @@
 package pe.com.agridron.field.domain.repositories;
 
 import pe.com.agridron.field.domain.model.aggregates.Parcel;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.field.domain.model.queries.ParcelSearchCriteria;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public interface ParcelRepository {
 
     List<Parcel> findByFarmId(Long farmId);
 
-    List<Parcel> search(ParcelSearchCriteria criteria);
+    PageResult<Parcel> search(ParcelSearchCriteria criteria);
 
     boolean existsByFarmIdAndName(Long farmId, String name);
 

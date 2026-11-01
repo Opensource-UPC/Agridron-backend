@@ -13,7 +13,10 @@ import pe.com.agridron.field.domain.events.ParcelGeometryUpdatedEvent;
 import pe.com.agridron.field.domain.events.ParcelRegisteredEvent;
 import pe.com.agridron.field.domain.events.ParcelStatusChangedEvent;
 import pe.com.agridron.field.domain.model.aggregates.Parcel;
+import pe.com.agridron.field.domain.model.queries.Pagination;
 import pe.com.agridron.field.domain.model.queries.ParcelSearchCriteria;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
@@ -173,8 +176,9 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
 
         var result = parcelRepository.search(new ParcelSearchCriteria(null, null, null, null, null));
 
-        assertThat(result).extracting(Parcel::getName)
+        assertThat(result.content()).extracting(Parcel::getName)
                 .containsExactly("Alfa", "Beta", "Gamma");
+        assertThat(result.totalElements()).isEqualTo(3);
     }
 
     @Test
@@ -191,27 +195,52 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
         medium.deactivate();
         parcelRepository.save(medium);
 
-        assertThat(parcelRepository.search(new ParcelSearchCriteria(firstFarmId, null, null, null, null)))
+        assertThat(parcelRepository.search(new ParcelSearchCriteria(firstFarmId, null, null, null, null)).content())
                 .extracting(Parcel::getName)
                 .containsExactly("Alfa", "Beta");
-        assertThat(parcelRepository.search(new ParcelSearchCriteria(null, ParcelStatus.INACTIVE, null, null, null)))
+        assertThat(parcelRepository.search(new ParcelSearchCriteria(null, ParcelStatus.INACTIVE, null, null, null)).content())
                 .extracting(Parcel::getName)
                 .containsExactly("Beta");
-        assertThat(parcelRepository.search(new ParcelSearchCriteria(null, null, cropId, null, null)))
+        assertThat(parcelRepository.search(new ParcelSearchCriteria(null, null, cropId, null, null)).content())
                 .extracting(Parcel::getName)
                 .containsExactly("Alfa", "Gamma");
         assertThat(parcelRepository.search(new ParcelSearchCriteria(
-                null, null, null, new java.math.BigDecimal("2"), null)))
+                null, null, null, new java.math.BigDecimal("2"), null)).content())
                 .extracting(Parcel::getName)
                 .containsExactly("Beta", "Gamma");
         assertThat(parcelRepository.search(new ParcelSearchCriteria(
-                null, null, null, null, new java.math.BigDecimal("2"))))
+                null, null, null, null, new java.math.BigDecimal("2"))).content())
                 .extracting(Parcel::getName)
                 .containsExactly("Alfa");
-        assertThat(parcelRepository.search(new ParcelSearchCriteria(firstFarmId, null, cropId, null, null)))
+        assertThat(parcelRepository.search(new ParcelSearchCriteria(firstFarmId, null, cropId, null, null)).content())
                 .extracting(Parcel::getName)
                 .containsExactly("Alfa");
         assertThat(small.getId()).isNotNull();
+    }
+
+    @Test
+    void paginatesAndOrdersSearches() {
+        var farmId = persistFarm();
+        parcelRepository.save(Parcel.create(farmId, "Gamma", geometry(0.003), null, null));
+        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null));
+        parcelRepository.save(Parcel.create(farmId, "Beta", geometry(0.002), null, null));
+        var criteria = new ParcelSearchCriteria(
+                farmId,
+                null,
+                null,
+                null,
+                null,
+                Pagination.of(0, 2),
+                new SortOrder("name", SortDirection.DESC));
+
+        var page = parcelRepository.search(criteria);
+
+        assertThat(page.content()).extracting(Parcel::getName).containsExactly("Gamma", "Beta");
+        assertThat(page.page()).isZero();
+        assertThat(page.size()).isEqualTo(2);
+        assertThat(page.totalElements()).isEqualTo(3);
+        assertThat(page.totalPages()).isEqualTo(2);
+        assertThat(page.last()).isFalse();
     }
 
     @Test
@@ -222,7 +251,8 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
         var result = parcelRepository.search(new ParcelSearchCriteria(
                 null, null, null, new java.math.BigDecimal("100"), null));
 
-        assertThat(result).isEmpty();
+        assertThat(result.content()).isEmpty();
+        assertThat(result.totalElements()).isZero();
     }
 
     @Test

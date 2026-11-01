@@ -16,7 +16,11 @@ import pe.com.agridron.field.domain.model.commands.CreateParcelCommand;
 import pe.com.agridron.field.domain.model.commands.RedefineParcelGeometryCommand;
 import pe.com.agridron.field.domain.model.commands.UpdateParcelCommand;
 import pe.com.agridron.field.domain.model.queries.GetParcelByIdQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
 import pe.com.agridron.field.domain.model.queries.ParcelSearchCriteria;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
@@ -152,7 +156,7 @@ class ParcelsControllerWebMvcTest {
                         && criteria.cropId().equals(2L)
                         && criteria.minAreaHectares().compareTo(new BigDecimal("0.5")) == 0
                         && criteria.maxAreaHectares().compareTo(new BigDecimal("10")) == 0)))
-                .thenReturn(List.of(parcel(5L, ParcelStatus.ACTIVE)));
+                .thenReturn(PageResult.unpaged(List.of(parcel(5L, ParcelStatus.ACTIVE))));
 
         mockMvc.perform(get("/api/v1/parcels")
                         .param("farmId", "1")
@@ -174,11 +178,48 @@ class ParcelsControllerWebMvcTest {
                         && criteria.cropId() == null
                         && criteria.minAreaHectares() == null
                         && criteria.maxAreaHectares() == null)))
-                .thenReturn(List.of());
+                .thenReturn(PageResult.unpaged(List.of()));
 
         mockMvc.perform(get("/api/v1/parcels").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void returnsPagedParcels() throws Exception {
+        when(parcelQueryService.handle(argThat((ParcelSearchCriteria criteria) ->
+                criteria.pagination().paged()
+                        && criteria.pagination().page() == 0
+                        && criteria.pagination().size() == 1
+                        && criteria.sortOrder().equals(new SortOrder("name", SortDirection.DESC)))))
+                .thenReturn(new PageResult<>(
+                        List.of(parcel(5L, ParcelStatus.ACTIVE)), 0, 1, 2));
+
+        mockMvc.perform(get("/api/v1/parcels")
+                        .param("page", "0")
+                        .param("size", "1")
+                        .param("sort", "name,desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(5))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+    }
+
+    @Test
+    void rejectsUnsupportedParcelSortField() throws Exception {
+        mockMvc.perform(get("/api/v1/parcels")
+                        .param("sort", "geometry")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verify(parcelQueryService, never()).handle(any(ParcelSearchCriteria.class));
     }
 
     @Test

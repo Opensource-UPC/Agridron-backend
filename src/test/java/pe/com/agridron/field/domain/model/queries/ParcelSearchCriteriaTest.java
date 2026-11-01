@@ -29,6 +29,33 @@ class ParcelSearchCriteriaTest {
         assertThat(criteria.farmId()).isEqualTo(1L);
         assertThat(criteria.status()).isEqualTo(ParcelStatus.ACTIVE);
         assertThat(criteria.cropId()).isEqualTo(2L);
+        assertThat(criteria.pagination()).isEqualTo(Pagination.unpaged());
+        assertThat(criteria.sortOrder()).isNull();
+    }
+
+    @Test
+    void keepsPaginationAndOrdering() {
+        var criteria = new ParcelSearchCriteria(
+                null,
+                null,
+                null,
+                null,
+                null,
+                Pagination.of(1, 10),
+                new SortOrder("areaHectares", SortDirection.DESC));
+
+        assertThat(criteria.pagination().page()).isEqualTo(1);
+        assertThat(criteria.pagination().size()).isEqualTo(10);
+        assertThat(criteria.sortOrder().field()).isEqualTo("areaHectares");
+        assertThat(criteria.sortOrder().direction()).isEqualTo(SortDirection.DESC);
+    }
+
+    @Test
+    void rejectsNullPagination() {
+        assertThatThrownBy(() -> new ParcelSearchCriteria(
+                null, null, null, null, null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("pagination");
     }
 
     @Test

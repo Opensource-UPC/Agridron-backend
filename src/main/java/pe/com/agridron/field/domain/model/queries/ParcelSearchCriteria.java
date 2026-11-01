@@ -5,20 +5,24 @@ import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import java.math.BigDecimal;
 
 /**
- * Optional filters used to search parcels.
+ * Optional filters used to search parcels, plus the requested slice and ordering.
  *
  * @param farmId           farm to filter by, or {@code null} for all farms
  * @param status           operational status to filter by, or {@code null}
  * @param cropId           crop to filter by, or {@code null}
  * @param minAreaHectares  inclusive minimum area, or {@code null}
  * @param maxAreaHectares  inclusive maximum area, or {@code null}
+ * @param pagination       requested slice, or {@link Pagination#unpaged()}
+ * @param sortOrder        requested ordering, or {@code null} for the endpoint default
  */
 public record ParcelSearchCriteria(
         Long farmId,
         ParcelStatus status,
         Long cropId,
         BigDecimal minAreaHectares,
-        BigDecimal maxAreaHectares) {
+        BigDecimal maxAreaHectares,
+        Pagination pagination,
+        SortOrder sortOrder) {
 
     public ParcelSearchCriteria {
         if (farmId != null && farmId <= 0) {
@@ -37,5 +41,21 @@ public record ParcelSearchCriteria(
                 && minAreaHectares.compareTo(maxAreaHectares) > 0) {
             throw new IllegalArgumentException("minAreaHectares must not be greater than maxAreaHectares");
         }
+        if (pagination == null) {
+            throw new IllegalArgumentException("pagination must not be null");
+        }
+    }
+
+    /**
+     * Creates an unpaged search with the default ordering.
+     */
+    public ParcelSearchCriteria(
+            Long farmId,
+            ParcelStatus status,
+            Long cropId,
+            BigDecimal minAreaHectares,
+            BigDecimal maxAreaHectares) {
+        this(farmId, status, cropId, minAreaHectares, maxAreaHectares,
+                Pagination.unpaged(), null);
     }
 }

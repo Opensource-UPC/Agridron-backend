@@ -2,11 +2,10 @@ package pe.com.agridron.field.application.queryservices;
 
 import pe.com.agridron.field.domain.model.aggregates.Parcel;
 import pe.com.agridron.field.domain.model.queries.GetParcelByIdQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.field.domain.model.queries.ParcelSearchCriteria;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Application service that resolves parcel read queries.
@@ -24,8 +23,8 @@ public interface ParcelQueryService {
     /**
      * Searches parcels combining the non-null criteria with AND.
      *
-     * @param criteria the search filters
-     * @return the matching parcels ordered by name and id, possibly empty
+     * @param criteria the search filters, requested slice and ordering
+     * @return the matching parcels and pagination metadata, possibly empty
      */
-    List<Parcel> handle(ParcelSearchCriteria criteria);
+    PageResult<Parcel> handle(ParcelSearchCriteria criteria);
 }

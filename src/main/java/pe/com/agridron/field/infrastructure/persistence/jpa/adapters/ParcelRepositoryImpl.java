@@ -1,11 +1,17 @@
 package pe.com.agridron.field.infrastructure.persistence.jpa.adapters;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import pe.com.agridron.field.domain.model.aggregates.Parcel;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.field.domain.model.queries.ParcelSearchCriteria;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.repositories.ParcelRepository;
 import pe.com.agridron.field.infrastructure.persistence.jpa.assemblers.ParcelPersistenceAssembler;
+import pe.com.agridron.field.infrastructure.persistence.jpa.entities.ParcelPersistenceEntity;
 import pe.com.agridron.field.infrastructure.persistence.jpa.repositories.ParcelPersistenceRepository;
 import pe.com.agridron.field.infrastructure.persistence.jpa.specifications.ParcelSpecifications;
 import pe.com.agridron.shared.infrastructure.events.DomainEventPublisher;
@@ -73,12 +79,43 @@ public class ParcelRepositoryImpl implements ParcelRepository {
     }
 
     @Override
-    public List<Parcel> search(ParcelSearchCriteria criteria) {
-        return parcelPersistenceRepository
-                .findAll(ParcelSpecifications.withCriteria(criteria), SEARCH_ORDER)
-                .stream()
-                .map(ParcelPersistenceAssembler::toDomainFromPersistence)
-                .toList();
+    public PageResult<Parcel> search(ParcelSearchCriteria criteria) {
+        var specification = ParcelSpecifications.withCriteria(criteria);
+        var sort = toSort(criteria.sortOrder());
+        if (!criteria.pagination().paged()) {
+            var content = parcelPersistenceRepository.findAll(specification, sort).stream()
+                    .map(ParcelPersistenceAssembler::toDomainFromPersistence)
+                    .toList();
+            return PageResult.unpaged(content);
+        }
+
+        var page = parcelPersistenceRepository.findAll(
+                specification,
+                PageRequest.of(criteria.pagination().page(), criteria.pagination().size(), sort));
+        return toPageResult(page);
+    }
+
+    private static Sort toSort(SortOrder sortOrder) {
+        if (sortOrder == null) {
+            return SEARCH_ORDER;
+        }
+        var direction = sortOrder.direction() == SortDirection.ASC
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        var primary = Sort.by(new Sort.Order(direction, sortOrder.field()));
+        return "id".equals(sortOrder.field())
+                ? primary
+                : primary.and(Sort.by(Sort.Order.asc("id")));
+    }
+
+    private static PageResult<Parcel> toPageResult(Page<ParcelPersistenceEntity> page) {
+        return new PageResult<>(
+                page.getContent().stream()
+                        .map(ParcelPersistenceAssembler::toDomainFromPersistence)
+                        .toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
     }
 
     @Override

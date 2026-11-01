@@ -31,14 +31,17 @@ import pe.com.agridron.field.interfaces.rest.resources.CreateParcelResource;
 import pe.com.agridron.field.interfaces.rest.resources.ParcelResource;
 import pe.com.agridron.field.interfaces.rest.resources.PolygonResource;
 import pe.com.agridron.field.interfaces.rest.resources.UpdateParcelResource;
+import pe.com.agridron.field.interfaces.rest.transform.CollectionResponseAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.CreateParcelCommandFromResourceAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.FieldGeometryFromPolygonResourceAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.PaginationFromRequestAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.ParcelResourceFromEntityAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.SortOrderFromRequestAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.UpdateParcelCommandFromResourceAssembler;
 import pe.com.agridron.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller that exposes parcel management endpoints.
@@ -47,6 +50,9 @@ import java.util.List;
 @RequestMapping("/api/v1/parcels")
 @Tag(name = "Parcels", description = "Parcel management endpoints")
 public class ParcelsController {
+
+    private static final Set<String> SORTABLE_FIELDS = Set.of(
+            "id", "name", "farmId", "cropId", "status", "areaHectares", "phenologicalStage");
 
     private final ParcelCommandService parcelCommandService;
     private final ParcelQueryService parcelQueryService;
@@ -89,16 +95,17 @@ public class ParcelsController {
     @GetMapping
     @Operation(
             summary = "Search parcels",
-            description = "Searches parcels combining the supplied filters with AND. "
-                    + "Every filter is optional; without filters every parcel is returned.")
+            description = "Searches parcels combining the supplied filters with AND. Without "
+                    + "page or size it returns every match; with page or size it returns a paged "
+                    + "envelope.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "Parcels retrieved",
                     content = @Content(schema = @Schema(implementation = ParcelResource.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid filter combination")
+            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters")
     })
-    public ResponseEntity<List<ParcelResource>> searchParcels(
+    public ResponseEntity<?> searchParcels(
             @RequestParam(required = false)
             @Parameter(description = "Farm identifier", example = "1")
             Long farmId,
@@ -113,13 +120,25 @@ public class ParcelsController {
             BigDecimal minAreaHectares,
             @RequestParam(required = false)
             @Parameter(description = "Inclusive maximum area in hectares", example = "10")
-            BigDecimal maxAreaHectares) {
+            BigDecimal maxAreaHectares,
+            @RequestParam(required = false)
+            @Parameter(description = "Zero-based page index", example = "0")
+            Integer page,
+            @RequestParam(required = false)
+            @Parameter(description = "Page size (1-100)", example = "20")
+            Integer size,
+            @RequestParam(required = false)
+            @Parameter(description = "Order as 'field' or 'field,asc|desc'", example = "name,asc")
+            String sort) {
+        var pagination = PaginationFromRequestAssembler.toPaginationFromRequest(page, size);
+        var sortOrder = SortOrderFromRequestAssembler.toSortOrderFromRequest(sort, SORTABLE_FIELDS);
         var criteria = new ParcelSearchCriteria(
-                farmId, status, cropId, minAreaHectares, maxAreaHectares);
-        var resources = parcelQueryService.handle(criteria).stream()
-                .map(ParcelResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
+                farmId, status, cropId, minAreaHectares, maxAreaHectares, pagination, sortOrder);
+        var result = parcelQueryService.handle(criteria);
+        return CollectionResponseAssembler.toResponseEntityFromPageResult(
+                result,
+                pagination.paged(),
+                ParcelResourceFromEntityAssembler::toResourceFromEntity);
     }
 
     /**
