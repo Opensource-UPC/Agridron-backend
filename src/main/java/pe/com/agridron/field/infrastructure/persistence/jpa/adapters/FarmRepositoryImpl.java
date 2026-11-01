@@ -1,13 +1,21 @@
 package pe.com.agridron.field.infrastructure.persistence.jpa.adapters;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import pe.com.agridron.field.domain.model.aggregates.Farm;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.repositories.FarmRepository;
 import pe.com.agridron.field.infrastructure.persistence.jpa.assemblers.FarmPersistenceAssembler;
+import pe.com.agridron.field.infrastructure.persistence.jpa.entities.FarmPersistenceEntity;
 import pe.com.agridron.field.infrastructure.persistence.jpa.repositories.FarmPersistenceRepository;
 import pe.com.agridron.shared.infrastructure.events.DomainEventPublisher;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,6 +27,10 @@ import java.util.Optional;
  */
 @Repository
 public class FarmRepositoryImpl implements FarmRepository {
+
+    private static final Sort DEFAULT_SORT = Sort.by(
+            Sort.Order.asc("name"),
+            Sort.Order.asc("id"));
 
     private final FarmPersistenceRepository farmPersistenceRepository;
     private final DomainEventPublisher domainEventPublisher;
@@ -60,10 +72,45 @@ public class FarmRepositoryImpl implements FarmRepository {
     }
 
     @Override
-    public List<Farm> findAllByOwnerId(Long ownerId) {
-        return farmPersistenceRepository.findAllByOwnerIdOrderByNameAsc(ownerId).stream()
-                .map(FarmPersistenceAssembler::toDomainFromPersistence)
-                .toList();
+    public PageResult<Farm> findAllByOwnerId(
+            Long ownerId,
+            Pagination pagination,
+            SortOrder sortOrder) {
+        var sort = toSort(sortOrder);
+        if (!pagination.paged()) {
+            var content = farmPersistenceRepository.findAllByOwnerId(ownerId, sort).stream()
+                    .map(FarmPersistenceAssembler::toDomainFromPersistence)
+                    .toList();
+            return PageResult.unpaged(content);
+        }
+
+        var page = farmPersistenceRepository.findAllByOwnerId(
+                ownerId,
+                PageRequest.of(pagination.page(), pagination.size(), sort));
+        return toPageResult(page);
+    }
+
+    private static Sort toSort(SortOrder sortOrder) {
+        if (sortOrder == null) {
+            return DEFAULT_SORT;
+        }
+        var direction = sortOrder.direction() == SortDirection.ASC
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        var primary = Sort.by(new Sort.Order(direction, sortOrder.field()));
+        return "id".equals(sortOrder.field())
+                ? primary
+                : primary.and(Sort.by(Sort.Order.asc("id")));
+    }
+
+    private static PageResult<Farm> toPageResult(Page<FarmPersistenceEntity> page) {
+        return new PageResult<>(
+                page.getContent().stream()
+                        .map(FarmPersistenceAssembler::toDomainFromPersistence)
+                        .toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
     }
 
     @Override

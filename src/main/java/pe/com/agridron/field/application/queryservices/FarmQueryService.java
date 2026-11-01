@@ -3,10 +3,9 @@ package pe.com.agridron.field.application.queryservices;
 import pe.com.agridron.field.domain.model.aggregates.Farm;
 import pe.com.agridron.field.domain.model.queries.GetFarmByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFarmsByOwnerQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Application service that resolves farm read queries.
@@ -22,10 +21,10 @@ public interface FarmQueryService {
     Result<Farm, ApplicationError> handle(GetFarmByIdQuery query);
 
     /**
-     * Lists the farms owned by a user, ordered by name.
+     * Lists the farms owned by a user.
      *
      * @param query the query
-     * @return the matching farms, possibly empty
+     * @return the matching farms and pagination metadata, possibly empty
      */
-    List<Farm> handle(GetFarmsByOwnerQuery query);
+    PageResult<Farm> handle(GetFarmsByOwnerQuery query);
 }

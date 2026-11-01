@@ -8,6 +8,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pe.com.agridron.field.domain.model.aggregates.Farm;
 import pe.com.agridron.field.domain.model.queries.GetFarmByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFarmsByOwnerQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.repositories.FarmRepository;
 import pe.com.agridron.shared.application.result.ApplicationError;
 
@@ -54,11 +58,30 @@ class FarmQueryServiceImplTest {
         var farms = List.of(
                 Farm.reconstitute(7L, 10L, "Alfa", "Lima", "Lima", Set.of()),
                 Farm.reconstitute(8L, 10L, "Zeta", "Lima", "Lima", Set.of()));
-        when(farmRepository.findAllByOwnerId(10L)).thenReturn(farms);
+        when(farmRepository.findAllByOwnerId(10L, Pagination.unpaged(), null))
+                .thenReturn(PageResult.unpaged(farms));
 
         var result = service.handle(new GetFarmsByOwnerQuery(10L));
 
-        assertThat(result).extracting(Farm::getName).containsExactly("Alfa", "Zeta");
-        verify(farmRepository).findAllByOwnerId(10L);
+        assertThat(result.content()).extracting(Farm::getName).containsExactly("Alfa", "Zeta");
+        verify(farmRepository).findAllByOwnerId(10L, Pagination.unpaged(), null);
+    }
+
+    @Test
+    void delegatesPaginationAndOrdering() {
+        var pagination = Pagination.of(1, 1);
+        var sortOrder = new SortOrder("name", SortDirection.DESC);
+        var page = new PageResult<>(
+                List.of(Farm.reconstitute(8L, 10L, "Zeta", "Lima", "Lima", Set.of())),
+                1,
+                1,
+                2);
+        when(farmRepository.findAllByOwnerId(10L, pagination, sortOrder)).thenReturn(page);
+
+        var result = service.handle(new GetFarmsByOwnerQuery(10L, pagination, sortOrder));
+
+        assertThat(result.content()).extracting(Farm::getName).containsExactly("Zeta");
+        assertThat(result.page()).isEqualTo(1);
+        assertThat(result.totalElements()).isEqualTo(2);
     }
 }

@@ -6,11 +6,10 @@ import pe.com.agridron.field.application.queryservices.FarmQueryService;
 import pe.com.agridron.field.domain.model.aggregates.Farm;
 import pe.com.agridron.field.domain.model.queries.GetFarmByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFarmsByOwnerQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.field.domain.repositories.FarmRepository;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Read-only implementation of the farm query service.
@@ -34,7 +33,8 @@ public class FarmQueryServiceImpl implements FarmQueryService {
     }
 
     @Override
-    public List<Farm> handle(GetFarmsByOwnerQuery query) {
-        return farmRepository.findAllByOwnerId(query.ownerId());
+    public PageResult<Farm> handle(GetFarmsByOwnerQuery query) {
+        return farmRepository.findAllByOwnerId(
+                query.ownerId(), query.pagination(), query.sortOrder());
     }
 }

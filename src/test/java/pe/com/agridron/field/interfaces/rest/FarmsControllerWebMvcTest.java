@@ -15,6 +15,10 @@ import pe.com.agridron.field.domain.model.commands.RemoveFarmSupervisorCommand;
 import pe.com.agridron.field.domain.model.commands.UpdateFarmCommand;
 import pe.com.agridron.field.domain.model.queries.GetFarmByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFarmsByOwnerQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
 
@@ -103,7 +107,7 @@ class FarmsControllerWebMvcTest {
     @Test
     void listsFarmsByOwner() throws Exception {
         when(farmQueryService.handle(new GetFarmsByOwnerQuery(10L)))
-                .thenReturn(List.of(farm(1L, Set.of()), farm(2L, Set.of(20L))));
+                .thenReturn(PageResult.unpaged(List.of(farm(1L, Set.of()), farm(2L, Set.of(20L)))));
 
         mockMvc.perform(get("/api/v1/farms")
                         .param("ownerId", "10")
@@ -114,6 +118,60 @@ class FarmsControllerWebMvcTest {
                 .andExpect(jsonPath("$[1].supervisorIds[0]").value(20));
 
         verify(farmQueryService).handle(new GetFarmsByOwnerQuery(10L));
+    }
+
+    @Test
+    void returnsPagedFarms() throws Exception {
+        var query = new GetFarmsByOwnerQuery(
+                10L,
+                Pagination.of(0, 2),
+                new SortOrder("name", SortDirection.DESC));
+        when(farmQueryService.handle(query))
+                .thenReturn(new PageResult<>(
+                        List.of(farm(2L, Set.of()), farm(1L, Set.of())),
+                        0,
+                        2,
+                        3));
+
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", "10")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("sort", "name,desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].id").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+    }
+
+    @Test
+    void rejectsUnsupportedSortField() throws Exception {
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", "10")
+                        .param("sort", "ownerId,asc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verify(farmQueryService, never()).handle(any(GetFarmsByOwnerQuery.class));
+    }
+
+    @Test
+    void rejectsInvalidPageSize() throws Exception {
+        mockMvc.perform(get("/api/v1/farms")
+                        .param("ownerId", "10")
+                        .param("size", "101")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verify(farmQueryService, never()).handle(any(GetFarmsByOwnerQuery.class));
     }
 
     @Test

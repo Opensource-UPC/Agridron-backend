@@ -3,6 +3,7 @@ package pe.com.agridron.field.infrastructure.persistence.jpa.repositories;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
 import pe.com.agridron.field.infrastructure.persistence.jpa.entities.FarmPersistenceEntity;
 import pe.com.agridron.field.support.AbstractFieldPersistenceTest;
 
@@ -20,7 +21,7 @@ class FarmPersistenceRepositoryTest extends AbstractFieldPersistenceTest {
         farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Alfa", "Lima", "Lima"));
         farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(20L, "Otra", "Lima", "Lima"));
 
-        var farms = farmPersistenceRepository.findAllByOwnerIdOrderByNameAsc(10L);
+        var farms = farmPersistenceRepository.findAllByOwnerId(10L, Sort.by("name").ascending());
 
         assertThat(farms).extracting(FarmPersistenceEntity::getName)
                 .containsExactly("Alfa", "Zeta");

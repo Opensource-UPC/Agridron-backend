@@ -64,6 +64,18 @@ class PageResultTest {
     }
 
     @Test
+    void mapsElementsKeepingMetadata() {
+        var page = new PageResult<>(List.of("a", "b"), 1, 2, 5);
+
+        var mapped = page.map(String::toUpperCase);
+
+        assertThat(mapped.content()).containsExactly("A", "B");
+        assertThat(mapped.page()).isEqualTo(1);
+        assertThat(mapped.size()).isEqualTo(2);
+        assertThat(mapped.totalElements()).isEqualTo(5);
+    }
+
+    @Test
     void rejectsInvalidMetadata() {
         assertThatThrownBy(() -> new PageResult<>(List.of(), -1, 20, 0))
                 .isInstanceOf(IllegalArgumentException.class)

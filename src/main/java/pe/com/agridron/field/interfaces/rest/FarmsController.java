@@ -29,12 +29,15 @@ import pe.com.agridron.field.interfaces.rest.resources.AssignFarmSupervisorResou
 import pe.com.agridron.field.interfaces.rest.resources.CreateFarmResource;
 import pe.com.agridron.field.interfaces.rest.resources.FarmResource;
 import pe.com.agridron.field.interfaces.rest.resources.UpdateFarmResource;
+import pe.com.agridron.field.interfaces.rest.transform.CollectionResponseAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.CreateFarmCommandFromResourceAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.FarmResourceFromEntityAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.PaginationFromRequestAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.SortOrderFromRequestAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.UpdateFarmCommandFromResourceAssembler;
 import pe.com.agridron.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller that exposes farm management endpoints.
@@ -43,6 +46,9 @@ import java.util.List;
 @RequestMapping("/api/v1/farms")
 @Tag(name = "Farms", description = "Farm management endpoints")
 public class FarmsController {
+
+    private static final Set<String> SORTABLE_FIELDS =
+            Set.of("id", "name", "location", "department");
 
     private final FarmCommandService farmCommandService;
     private final FarmQueryService farmQueryService;
@@ -82,23 +88,37 @@ public class FarmsController {
     @GetMapping
     @Operation(
             summary = "List farms by owner",
-            description = "Retrieves every farm owned by the given owner, ordered by name.")
+            description = "Retrieves the farms owned by the given owner. Without page or size it "
+                    + "returns every farm ordered by name; with page or size it returns a paged "
+                    + "envelope.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "Farms retrieved",
                     content = @Content(schema = @Schema(implementation = FarmResource.class))),
-            @ApiResponse(responseCode = "400", description = "Missing or invalid ownerId")
+            @ApiResponse(responseCode = "400", description = "Missing or invalid query parameters")
     })
-    public ResponseEntity<List<FarmResource>> getFarmsByOwner(
+    public ResponseEntity<?> getFarmsByOwner(
             @RequestParam
             @Parameter(description = "Owner identifier", example = "10", required = true)
-            Long ownerId) {
-        var farms = farmQueryService.handle(new GetFarmsByOwnerQuery(ownerId));
-        var resources = farms.stream()
-                .map(FarmResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
+            Long ownerId,
+            @RequestParam(required = false)
+            @Parameter(description = "Zero-based page index", example = "0")
+            Integer page,
+            @RequestParam(required = false)
+            @Parameter(description = "Page size (1-100)", example = "20")
+            Integer size,
+            @RequestParam(required = false)
+            @Parameter(description = "Order as 'field' or 'field,asc|desc'", example = "name,asc")
+            String sort) {
+        var pagination = PaginationFromRequestAssembler.toPaginationFromRequest(page, size);
+        var sortOrder = SortOrderFromRequestAssembler.toSortOrderFromRequest(sort, SORTABLE_FIELDS);
+        var result = farmQueryService.handle(
+                new GetFarmsByOwnerQuery(ownerId, pagination, sortOrder));
+        return CollectionResponseAssembler.toResponseEntityFromPageResult(
+                result,
+                pagination.paged(),
+                FarmResourceFromEntityAssembler::toResourceFromEntity);
     }
 
     /**

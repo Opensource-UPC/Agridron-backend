@@ -1,6 +1,7 @@
 package pe.com.agridron.field.domain.model.queries;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * One page of results plus the metadata needed by clients to navigate the collection.
@@ -57,5 +58,16 @@ public record PageResult<T>(List<T> content, int page, int size, long totalEleme
 
     public boolean hasNext() {
         return page + 1 < totalPages();
+    }
+
+    /**
+     * Maps every element while preserving the page metadata.
+     */
+    public <R> PageResult<R> map(Function<? super T, ? extends R> mapper) {
+        return new PageResult<>(
+                content.stream().<R>map(mapper).toList(),
+                page,
+                size,
+                totalElements);
     }
 }

@@ -11,6 +11,9 @@ import pe.com.agridron.field.domain.events.FarmRegisteredEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorAssignedEvent;
 import pe.com.agridron.field.domain.events.FarmSupervisorRemovedEvent;
 import pe.com.agridron.field.domain.model.aggregates.Farm;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.infrastructure.persistence.jpa.entities.FarmPersistenceEntity;
 import pe.com.agridron.field.support.AbstractFieldPersistenceTest;
 import pe.com.agridron.shared.infrastructure.events.DomainEventPublisher;
@@ -139,9 +142,29 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
         persistFarm(10L, "Alfa", Set.of());
         persistFarm(20L, "Otra", Set.of());
 
-        var farms = farmRepository.findAllByOwnerId(10L);
+        var farms = farmRepository.findAllByOwnerId(10L, Pagination.unpaged(), null);
 
-        assertThat(farms).extracting(Farm::getName).containsExactly("Alfa", "Zeta");
+        assertThat(farms.content()).extracting(Farm::getName).containsExactly("Alfa", "Zeta");
+        assertThat(farms.totalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void paginatesAndOrdersFarmsOfAnOwner() {
+        persistFarm(10L, "Zeta", Set.of());
+        persistFarm(10L, "Alfa", Set.of());
+        persistFarm(10L, "Media", Set.of());
+
+        var page = farmRepository.findAllByOwnerId(
+                10L,
+                Pagination.of(0, 2),
+                new SortOrder("name", SortDirection.DESC));
+
+        assertThat(page.content()).extracting(Farm::getName).containsExactly("Zeta", "Media");
+        assertThat(page.page()).isZero();
+        assertThat(page.size()).isEqualTo(2);
+        assertThat(page.totalElements()).isEqualTo(3);
+        assertThat(page.totalPages()).isEqualTo(2);
+        assertThat(page.last()).isFalse();
     }
 
     @Test
