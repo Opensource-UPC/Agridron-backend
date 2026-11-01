@@ -35,12 +35,13 @@ public final class SortOrderFromRequestAssembler {
                     "sort must use the format 'field' or 'field,asc|desc'");
         }
 
-        var field = parts[0].trim().toLowerCase(Locale.ROOT);
-        if (!allowedFields.contains(field)) {
-            throw new IllegalArgumentException(
-                    "sort field '%s' is not supported; allowed fields: %s"
-                            .formatted(field, allowedFields.stream().sorted().toList()));
-        }
+        var requested = parts[0].trim();
+        var field = allowedFields.stream()
+                .filter(allowed -> allowed.equalsIgnoreCase(requested))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "sort field '%s' is not supported; allowed fields: %s"
+                                .formatted(requested, allowedFields.stream().sorted().toList())));
 
         var direction = parts.length == 2
                 ? parseDirection(parts[1])

@@ -10,6 +10,10 @@ import pe.com.agridron.field.domain.model.aggregates.FumigationArea;
 import pe.com.agridron.field.domain.model.aggregates.Parcel;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreaByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreasByParcelQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import pe.com.agridron.field.domain.repositories.FumigationAreaRepository;
@@ -62,15 +66,34 @@ class FumigationAreaQueryServiceImplTest {
     @Test
     void listsAreasOfParcel() {
         when(parcelRepository.findById(1L)).thenReturn(Optional.of(parcel()));
-        when(fumigationAreaRepository.findByParcelId(1L)).thenReturn(List.of(area(9L), area(10L)));
+        when(fumigationAreaRepository.findByParcelId(1L, Pagination.unpaged(), null))
+                .thenReturn(PageResult.unpaged(List.of(area(9L), area(10L))));
 
         var result = service.handle(new GetFumigationAreasByParcelQuery(1L));
 
         assertThat(result.isSuccess()).isTrue();
-        assertThat(result.toOptional().orElseThrow())
+        assertThat(result.toOptional().orElseThrow().content())
                 .extracting(FumigationArea::getId)
                 .containsExactly(9L, 10L);
-        verify(fumigationAreaRepository).findByParcelId(1L);
+        verify(fumigationAreaRepository).findByParcelId(1L, Pagination.unpaged(), null);
+    }
+
+    @Test
+    void delegatesPaginationAndOrdering() {
+        var pagination = Pagination.of(0, 1);
+        var sortOrder = new SortOrder("areaHectares", SortDirection.DESC);
+        when(parcelRepository.findById(1L)).thenReturn(Optional.of(parcel()));
+        when(fumigationAreaRepository.findByParcelId(1L, pagination, sortOrder))
+                .thenReturn(new PageResult<>(List.of(area(10L)), 0, 1, 2));
+
+        var result = service.handle(
+                new GetFumigationAreasByParcelQuery(1L, pagination, sortOrder));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.toOptional().orElseThrow().content())
+                .extracting(FumigationArea::getId)
+                .containsExactly(10L);
+        assertThat(result.toOptional().orElseThrow().totalElements()).isEqualTo(2);
     }
 
     @Test

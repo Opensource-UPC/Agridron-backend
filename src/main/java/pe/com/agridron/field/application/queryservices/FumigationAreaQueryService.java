@@ -3,10 +3,9 @@ package pe.com.agridron.field.application.queryservices;
 import pe.com.agridron.field.domain.model.aggregates.FumigationArea;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreaByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreasByParcelQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Application service that resolves fumigation area read queries.
@@ -22,10 +21,12 @@ public interface FumigationAreaQueryService {
     Result<FumigationArea, ApplicationError> handle(GetFumigationAreaByIdQuery query);
 
     /**
-     * Lists the fumigation areas of a parcel ordered by identifier.
+     * Lists the fumigation areas of a parcel.
      *
      * @param query the query
-     * @return the areas or a {@code PARCEL_NOT_FOUND} error
+     * @return the matching areas and pagination metadata,
+     *         or a {@code PARCEL_NOT_FOUND} error
      */
-    Result<List<FumigationArea>, ApplicationError> handle(GetFumigationAreasByParcelQuery query);
+    Result<PageResult<FumigationArea>, ApplicationError> handle(
+            GetFumigationAreasByParcelQuery query);
 }

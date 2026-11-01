@@ -9,6 +9,9 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 import pe.com.agridron.field.domain.TestGeometries;
 import pe.com.agridron.field.domain.events.FumigationAreaDelimitedEvent;
 import pe.com.agridron.field.domain.model.aggregates.FumigationArea;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
 import pe.com.agridron.field.infrastructure.persistence.jpa.entities.FarmPersistenceEntity;
@@ -99,10 +102,37 @@ class FumigationAreaRepositoryImplTest extends AbstractFieldPersistenceTest {
         fumigationAreaRepository.save(
                 FumigationArea.delimit(otherParcelId, PARCEL_GEOMETRY, geometry(-77.041, -12.045, 0.002)));
 
-        var areas = fumigationAreaRepository.findByParcelId(parcelId);
+        var areas = fumigationAreaRepository.findByParcelId(
+                parcelId, Pagination.unpaged(), null);
 
-        assertThat(areas).extracting(FumigationArea::getId)
+        assertThat(areas.content()).extracting(FumigationArea::getId)
                 .containsExactly(first.getId(), second.getId());
+        assertThat(areas.totalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void paginatesAndOrdersAreasOfParcel() {
+        var parcelId = persistParcel();
+        var first = fumigationAreaRepository.save(
+                FumigationArea.delimit(parcelId, PARCEL_GEOMETRY, geometry(-77.041, -12.045, 0.002)));
+        var second = fumigationAreaRepository.save(
+                FumigationArea.delimit(parcelId, PARCEL_GEOMETRY, geometry(-77.040, -12.044, 0.003)));
+        var third = fumigationAreaRepository.save(
+                FumigationArea.delimit(parcelId, PARCEL_GEOMETRY, geometry(-77.039, -12.043, 0.004)));
+
+        var page = fumigationAreaRepository.findByParcelId(
+                parcelId,
+                Pagination.of(0, 2),
+                new SortOrder("areaHectares", SortDirection.DESC));
+
+        assertThat(page.content()).extracting(FumigationArea::getId)
+                .containsExactly(third.getId(), second.getId());
+        assertThat(page.page()).isZero();
+        assertThat(page.size()).isEqualTo(2);
+        assertThat(page.totalElements()).isEqualTo(3);
+        assertThat(page.totalPages()).isEqualTo(2);
+        assertThat(page.last()).isFalse();
+        assertThat(first.getId()).isNotNull();
     }
 
     @Test

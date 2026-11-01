@@ -20,19 +20,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pe.com.agridron.field.application.commandservices.FumigationAreaCommandService;
 import pe.com.agridron.field.application.queryservices.FumigationAreaQueryService;
-import pe.com.agridron.field.domain.model.aggregates.FumigationArea;
 import pe.com.agridron.field.domain.model.commands.RedefineFumigationAreaCommand;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreaByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreasByParcelQuery;
 import pe.com.agridron.field.interfaces.rest.resources.CreateFumigationAreaResource;
 import pe.com.agridron.field.interfaces.rest.resources.FumigationAreaResource;
 import pe.com.agridron.field.interfaces.rest.resources.PolygonResource;
+import pe.com.agridron.field.interfaces.rest.transform.CollectionResponseAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.DelimitFumigationAreaCommandFromResourceAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.FieldGeometryFromPolygonResourceAssembler;
 import pe.com.agridron.field.interfaces.rest.transform.FumigationAreaResourceFromEntityAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.PaginationFromRequestAssembler;
+import pe.com.agridron.field.interfaces.rest.transform.SortOrderFromRequestAssembler;
 import pe.com.agridron.shared.interfaces.rest.transform.ResponseEntityAssembler;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller that exposes fumigation area endpoints.
@@ -41,6 +43,8 @@ import java.util.List;
 @RequestMapping("/api/v1/fumigation-areas")
 @Tag(name = "Fumigation Areas", description = "Fumigation area management endpoints")
 public class FumigationAreasController {
+
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "areaHectares");
 
     private final FumigationAreaCommandService fumigationAreaCommandService;
     private final FumigationAreaQueryService fumigationAreaQueryService;
@@ -86,25 +90,38 @@ public class FumigationAreasController {
     @GetMapping
     @Operation(
             summary = "List fumigation areas by parcel",
-            description = "Retrieves every fumigation area delimited inside the given parcel.")
+            description = "Retrieves the fumigation areas delimited inside the given parcel. "
+                    + "Without page or size it returns every area; with page or size it returns "
+                    + "a paged envelope.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
                     description = "Fumigation areas retrieved",
                     content = @Content(schema = @Schema(implementation = FumigationAreaResource.class))),
-            @ApiResponse(responseCode = "400", description = "Missing or invalid parcelId"),
+            @ApiResponse(responseCode = "400", description = "Missing or invalid query parameters"),
             @ApiResponse(responseCode = "404", description = "Parcel not found")
     })
     public ResponseEntity<?> getFumigationAreasByParcel(
             @RequestParam
             @Parameter(description = "Parcel identifier", example = "1", required = true)
-            Long parcelId) {
+            Long parcelId,
+            @RequestParam(required = false)
+            @Parameter(description = "Zero-based page index", example = "0")
+            Integer page,
+            @RequestParam(required = false)
+            @Parameter(description = "Page size (1-100)", example = "20")
+            Integer size,
+            @RequestParam(required = false)
+            @Parameter(description = "Order as 'field' or 'field,asc|desc'", example = "id,asc")
+            String sort) {
+        var pagination = PaginationFromRequestAssembler.toPaginationFromRequest(page, size);
+        var sortOrder = SortOrderFromRequestAssembler.toSortOrderFromRequest(sort, SORTABLE_FIELDS);
         var result = fumigationAreaQueryService.handle(
-                new GetFumigationAreasByParcelQuery(parcelId));
-        return ResponseEntityAssembler.toResponseEntityFromResult(
+                new GetFumigationAreasByParcelQuery(parcelId, pagination, sortOrder));
+        return CollectionResponseAssembler.toResponseEntityFromResult(
                 result,
-                FumigationAreasController::toResources,
-                HttpStatus.OK);
+                pagination.paged(),
+                FumigationAreaResourceFromEntityAssembler::toResourceFromEntity);
     }
 
     /**
@@ -162,11 +179,5 @@ public class FumigationAreasController {
                 result,
                 FumigationAreaResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.OK);
-    }
-
-    private static List<FumigationAreaResource> toResources(List<FumigationArea> areas) {
-        return areas.stream()
-                .map(FumigationAreaResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
     }
 }

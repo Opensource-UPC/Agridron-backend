@@ -6,12 +6,11 @@ import pe.com.agridron.field.application.queryservices.FumigationAreaQueryServic
 import pe.com.agridron.field.domain.model.aggregates.FumigationArea;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreaByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreasByParcelQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
 import pe.com.agridron.field.domain.repositories.FumigationAreaRepository;
 import pe.com.agridron.field.domain.repositories.ParcelRepository;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
-
-import java.util.List;
 
 /**
  * Read-only implementation of the fumigation area query service.
@@ -39,11 +38,13 @@ public class FumigationAreaQueryServiceImpl implements FumigationAreaQueryServic
     }
 
     @Override
-    public Result<List<FumigationArea>, ApplicationError> handle(GetFumigationAreasByParcelQuery query) {
+    public Result<PageResult<FumigationArea>, ApplicationError> handle(
+            GetFumigationAreasByParcelQuery query) {
         if (parcelRepository.findById(query.parcelId()).isEmpty()) {
             return Result.failure(notFound("Parcel", query.parcelId()));
         }
-        return Result.success(fumigationAreaRepository.findByParcelId(query.parcelId()));
+        return Result.success(fumigationAreaRepository.findByParcelId(
+                query.parcelId(), query.pagination(), query.sortOrder()));
     }
 
     private ApplicationError notFound(String resource, Long id) {

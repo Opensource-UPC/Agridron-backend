@@ -3,6 +3,7 @@ package pe.com.agridron.field.infrastructure.persistence.jpa.repositories;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.data.domain.Sort;
 import pe.com.agridron.field.domain.TestGeometries;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.field.domain.model.valueobjects.ParcelStatus;
@@ -33,7 +34,8 @@ class FumigationAreaPersistenceRepositoryTest extends AbstractFieldPersistenceTe
         var second = persistArea(firstParcelId);
         persistArea(secondParcelId);
 
-        var areas = fumigationAreaPersistenceRepository.findAllByParcelIdOrderByIdAsc(firstParcelId);
+        var areas = fumigationAreaPersistenceRepository.findAllByParcelId(
+                firstParcelId, Sort.by("id").ascending());
 
         assertThat(areas).extracting(FumigationAreaPersistenceEntity::getId)
                 .containsExactly(first.getId(), second.getId());

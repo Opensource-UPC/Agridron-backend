@@ -15,6 +15,10 @@ import pe.com.agridron.field.domain.model.commands.DelimitFumigationAreaCommand;
 import pe.com.agridron.field.domain.model.commands.RedefineFumigationAreaCommand;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreaByIdQuery;
 import pe.com.agridron.field.domain.model.queries.GetFumigationAreasByParcelQuery;
+import pe.com.agridron.field.domain.model.queries.PageResult;
+import pe.com.agridron.field.domain.model.queries.Pagination;
+import pe.com.agridron.field.domain.model.queries.SortDirection;
+import pe.com.agridron.field.domain.model.queries.SortOrder;
 import pe.com.agridron.field.domain.model.valueobjects.FieldGeometry;
 import pe.com.agridron.shared.application.result.ApplicationError;
 import pe.com.agridron.shared.application.result.Result;
@@ -127,7 +131,7 @@ class FumigationAreasControllerWebMvcTest {
     @Test
     void listsFumigationAreasByParcel() throws Exception {
         when(fumigationAreaQueryService.handle(new GetFumigationAreasByParcelQuery(1L)))
-                .thenReturn(Result.success(List.of(area(1L), area(2L))));
+                .thenReturn(Result.success(PageResult.unpaged(List.of(area(1L), area(2L)))));
 
         mockMvc.perform(get("/api/v1/fumigation-areas")
                         .param("parcelId", "1")
@@ -138,6 +142,46 @@ class FumigationAreasControllerWebMvcTest {
                 .andExpect(jsonPath("$[1].id").value(2));
 
         verify(fumigationAreaQueryService).handle(new GetFumigationAreasByParcelQuery(1L));
+    }
+
+    @Test
+    void returnsPagedFumigationAreas() throws Exception {
+        var query = new GetFumigationAreasByParcelQuery(
+                1L,
+                Pagination.of(0, 1),
+                new SortOrder("areaHectares", SortDirection.DESC));
+        when(fumigationAreaQueryService.handle(query))
+                .thenReturn(Result.success(
+                        new PageResult<>(List.of(area(2L)), 0, 1, 2)));
+
+        mockMvc.perform(get("/api/v1/fumigation-areas")
+                        .param("parcelId", "1")
+                        .param("page", "0")
+                        .param("size", "1")
+                        .param("sort", "areaHectares,desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(false));
+    }
+
+    @Test
+    void rejectsUnsupportedFumigationAreaSortField() throws Exception {
+        mockMvc.perform(get("/api/v1/fumigation-areas")
+                        .param("parcelId", "1")
+                        .param("sort", "parcelId")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        verify(fumigationAreaQueryService, never())
+                .handle(any(GetFumigationAreasByParcelQuery.class));
     }
 
     @Test

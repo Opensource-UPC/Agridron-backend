@@ -51,6 +51,15 @@ class SortOrderFromRequestAssemblerTest {
     }
 
     @Test
+    void resolvesTheCanonicalNameOfCamelCaseFields() {
+        var order = SortOrderFromRequestAssembler.toSortOrderFromRequest(
+                "areahectares,desc", Set.of("id", "areaHectares"));
+
+        assertThat(order.field()).isEqualTo("areaHectares");
+        assertThat(order.direction()).isEqualTo(SortDirection.DESC);
+    }
+
+    @Test
     void rejectsTooManyParts() {
         assertThatThrownBy(() ->
                 SortOrderFromRequestAssembler.toSortOrderFromRequest("name,asc,id", ALLOWED))
