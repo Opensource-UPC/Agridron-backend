@@ -100,6 +100,11 @@ Antes de escribir código en un bounded context, lee
 
 Decisiones de arquitectura registradas en [`docs/adrs`](docs/adrs).
 
+El mapeo de persistencia de Field Management está en
+[`docs/field-persistence.md`](docs/field-persistence.md), su contrato HTTP en
+[`docs/field-api.md`](docs/field-api.md) y su catálogo de eventos de integración en
+[`docs/field-events.md`](docs/field-events.md).
+
 ## Ramas
 
 - `main`: versiones liberadas.

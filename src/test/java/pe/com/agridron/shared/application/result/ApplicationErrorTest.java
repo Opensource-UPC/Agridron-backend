@@ -15,6 +15,15 @@ class ApplicationErrorTest {
     }
 
     @Test
+    void invalidGeometryUsesReservedCodeAndKeepsDetails() {
+        var error = ApplicationError.invalidGeometry("Self-intersecting polygon");
+
+        assertThat(error.code()).isEqualTo("INVALID_GEOMETRY");
+        assertThat(error.message()).isEqualTo("Invalid geometry");
+        assertThat(error.details()).isEqualTo("Self-intersecting polygon");
+    }
+
+    @Test
     void conflictBuildsResourceSpecificCode() {
         var error = ApplicationError.conflict("Farm", "Name already exists");
 

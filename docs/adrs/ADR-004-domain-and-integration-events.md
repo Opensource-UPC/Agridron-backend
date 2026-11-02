@@ -18,6 +18,10 @@ misión) sin acoplarse a sus modelos internos.
 - La traducción de evento de dominio a evento de integración ocurre en
   `application/internal/eventhandlers`.
 
+> **Nota:** la ubicación definitiva del traductor es `<bc>.interfaces.eventhandlers` con
+> `@TransactionalEventListener(phase = AFTER_COMMIT)`. Ver
+> [`ADR-009`](ADR-009-field-integration-events.md).
+
 ## Consecuencias
 
 - Bajo acoplamiento entre BCs.
