@@ -14,13 +14,13 @@ class CropPersistenceEntityTest extends AbstractFieldPersistenceTest {
 
     @Test
     void persistsCropWithAuditingFields() {
-        var crop = new CropPersistenceEntity("Café", "Catimor");
+        var crop = new CropPersistenceEntity("Café de prueba", "Catimor de prueba");
 
         var persisted = entityManager.persistFlushFind(crop);
 
         assertThat(persisted.getId()).isNotNull();
-        assertThat(persisted.getName()).isEqualTo("Café");
-        assertThat(persisted.getVariety()).isEqualTo("Catimor");
+        assertThat(persisted.getName()).isEqualTo("Café de prueba");
+        assertThat(persisted.getVariety()).isEqualTo("Catimor de prueba");
         assertThat(persisted.getCreatedAt()).isNotNull();
         assertThat(persisted.getUpdatedAt()).isNotNull();
         assertThat(persisted.getVersion()).isZero();
