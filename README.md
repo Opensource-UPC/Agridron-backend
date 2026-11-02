@@ -52,6 +52,11 @@ La API queda disponible en `http://localhost:8080`.
 ```text
 src/main/java/pe/com/agridron
 ├── AgridronApplication.java
+├── analytics                       # Analytics & Reporting (reportes, historial e indicadores)
+│   ├── application                 # command/query services
+│   ├── domain                      # agregados, value objects, eventos, repositorios, calculadora de indicadores
+│   ├── infrastructure/persistence  # entidades JPA, specifications y adaptadores
+│   └── interfaces/rest             # controladores, resources y assemblers
 ├── field                           # Field Management (fincas, parcelas, cultivos, fumigación)
 │   ├── application                 # command/query services
 │   ├── domain                      # agregados, value objects, eventos, repositorios
@@ -74,7 +79,7 @@ src/main/java/pe/com/agridron
     └── interfaces/rest             # ProblemDetail, manejador global, status
 ```
 
-El resto de bounded contexts (`iam`, `flight`, `weather`, `analytics`, `inventory`) se
+El resto de bounded contexts (`iam`, `flight`, `weather`, `inventory`) se
 agregarán como paquetes hermanos de `shared`, cada uno con las capas `domain`, `application`,
 `infrastructure` e `interfaces`.
 
