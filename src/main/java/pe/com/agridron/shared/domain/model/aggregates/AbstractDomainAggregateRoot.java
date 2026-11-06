@@ -18,6 +18,7 @@ import java.util.Collection;
 public abstract class AbstractDomainAggregateRoot<T extends AbstractDomainAggregateRoot<T>>
         extends AbstractAggregateRoot<T> {
 
+
     /**
      * Registers a domain event to be published after this aggregate is saved.
      *
