@@ -1,6 +1,6 @@
 
 
-package pe.com.agridron.inventory.domain.model.service;
+package pe.com.agridron.inventory.domain.model.services;
 
 /**
  * Validaciones pequeñas que comparten los agregados de Inventory & Resource Management.

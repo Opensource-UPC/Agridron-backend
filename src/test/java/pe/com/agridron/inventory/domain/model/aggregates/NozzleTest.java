@@ -1,5 +1,5 @@
-package pe.com.agridron.inventory.domain.model.aggregates;
 
+package pe.com.agridron.inventory.domain.model.aggregates;
 
 import org.junit.jupiter.api.Test;
 import pe.com.agridron.inventory.domain.model.valueobjects.NozzleStock;
@@ -58,8 +58,10 @@ class NozzleTest {
     }
 
     @Test
-    void cannotTakeAUnitWhenThereAreNoGoodUnits() {
-        var nozzle = Nozzle.register("flat-fan", 5.0, new NozzleStock(0, 3, 0));
+    void cannotTakeAUnitWhenOnlyDamagedUnitsRemain() {
+        var nozzle = Nozzle.register("flat-fan", 5.0, new NozzleStock(0, 0, 3));
+
+        assertThat(nozzle.hasInstallableUnits()).isFalse();
 
         assertThatThrownBy(nozzle::takeOneUnit).isInstanceOf(IllegalStateException.class);
     }

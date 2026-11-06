@@ -1,6 +1,8 @@
+
 package pe.com.agridron.inventory.domain.model.aggregates;
 
 import lombok.Getter;
+import pe.com.agridron.inventory.domain.model.services.DomainValidation;
 import pe.com.agridron.inventory.domain.model.valueobjects.NozzleStock;
 import pe.com.agridron.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 
@@ -22,8 +24,8 @@ public class Nozzle extends AbstractDomainAggregateRoot<Nozzle> {
     private NozzleStock stock;
 
     private Nozzle(String type, Double diameterMm, NozzleStock stock) {
-        this.type = requireType(type);
-        this.diameterMm = requirePositiveDiameter(diameterMm);
+        this.type = DomainValidation.requireText(type, "type", TYPE_MAX_LENGTH);
+        this.diameterMm = DomainValidation.requirePositive(diameterMm, "diameterMm");
         this.stock = stock != null ? stock : NozzleStock.empty();
     }
 
@@ -38,11 +40,8 @@ public class Nozzle extends AbstractDomainAggregateRoot<Nozzle> {
      * Reconstruye una boquilla existente a partir de lo guardado en base de datos.
      */
     public static Nozzle reconstitute(Long id, String type, Double diameterMm, NozzleStock stock) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("id must be positive");
-        }
         var nozzle = new Nozzle(type, diameterMm, stock);
-        nozzle.id = id;
+        nozzle.id = DomainValidation.requirePositive(id, "id");
         return nozzle;
     }
 
@@ -61,32 +60,13 @@ public class Nozzle extends AbstractDomainAggregateRoot<Nozzle> {
         this.stock = stock.markAsDamaged(units);
     }
 
-    /** Indica si hay al menos una unidad buena para instalar en un dron. */
+    /** Indica si hay al menos una unidad (buena o desgastada) para instalar en un dron. */
     public boolean hasInstallableUnits() {
         return stock.hasInstallableUnits();
     }
 
-    /** Retira una unidad buena para instalarla en un dron. */
+    /** Retira una unidad para instalarla en un dron (primero buena, luego desgastada). */
     public void takeOneUnit() {
         this.stock = stock.takeOne();
-    }
-
-    private static String requireType(String type) {
-        if (type == null || type.isBlank()) {
-            throw new IllegalArgumentException("type is required");
-        }
-        var normalized = type.trim();
-        if (normalized.length() > TYPE_MAX_LENGTH) {
-            throw new IllegalArgumentException(
-                    "type must have at most %d characters".formatted(TYPE_MAX_LENGTH));
-        }
-        return normalized;
-    }
-
-    private static Double requirePositiveDiameter(Double diameterMm) {
-        if (diameterMm == null || diameterMm <= 0) {
-            throw new IllegalArgumentException("diameterMm must be positive");
-        }
-        return diameterMm;
     }
 }

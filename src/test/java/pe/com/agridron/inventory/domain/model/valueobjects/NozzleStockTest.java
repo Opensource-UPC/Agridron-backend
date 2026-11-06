@@ -1,4 +1,6 @@
+
 package pe.com.agridron.inventory.domain.model.valueobjects;
+
 
 
 import org.junit.jupiter.api.Test;
@@ -61,14 +63,20 @@ class NozzleStockTest {
     }
 
     @Test
-    void takeOneRemovesOneGoodUnit() {
+    void takeOneUsesAGoodUnitFirst() {
         assertThat(new NozzleStock(3, 1, 1).takeOne()).isEqualTo(new NozzleStock(2, 1, 1));
     }
 
     @Test
-    void takeOneFailsWithoutGoodUnits() {
-        var stock = new NozzleStock(0, 4, 2);
+    void takeOneUsesAWornUnitWhenThereAreNoGoodUnits() {
+        assertThat(new NozzleStock(0, 4, 2).takeOne()).isEqualTo(new NozzleStock(0, 3, 2));
+    }
 
+    @Test
+    void damagedUnitsAreNeverInstallable() {
+        var stock = new NozzleStock(0, 0, 5);
+
+        assertThat(stock.installableUnits()).isZero();
         assertThat(stock.hasInstallableUnits()).isFalse();
         assertThatThrownBy(stock::takeOne).isInstanceOf(IllegalStateException.class);
     }
