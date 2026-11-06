@@ -4,9 +4,10 @@ package pe.com.agridron.inventory.domain.model.valueobjects;
  * Stock en bodega de un tipo de boquilla, separado por estado de las unidades.
  *
  * <p>Es inmutable: cada operación devuelve un nuevo {@code NozzleStock}. Ningún contador
- * puede quedar negativo.</p>
+ * puede quedar negativo. Se pueden instalar unidades buenas o desgastadas (primero las
+ * buenas); las dañadas nunca se instalan.</p>
  *
- * @param goodUnits    unidades en buen estado (las únicas que se pueden instalar)
+ * @param goodUnits    unidades en buen estado
  * @param wornUnits    unidades desgastadas
  * @param damagedUnits unidades dañadas
  */
@@ -33,10 +34,17 @@ public record NozzleStock(int goodUnits, int wornUnits, int damagedUnits) {
     }
 
     /**
-     * Indica si hay al menos una unidad buena para instalar en un dron.
+     * Unidades que se pueden instalar en un dron (buenas + desgastadas).
+     */
+    public int installableUnits() {
+        return goodUnits + wornUnits;
+    }
+
+    /**
+     * Indica si hay al menos una unidad que se pueda instalar.
      */
     public boolean hasInstallableUnits() {
-        return goodUnits > 0;
+        return installableUnits() > 0;
     }
 
     /**
@@ -66,11 +74,17 @@ public record NozzleStock(int goodUnits, int wornUnits, int damagedUnits) {
     }
 
     /**
-     * Retira una unidad buena de bodega para instalarla en un dron.
+     * Retira una unidad de bodega para instalarla en un dron: una buena si hay;
+     * si no, una desgastada.
      */
     public NozzleStock takeOne() {
-        requireEnoughGoodUnits(1);
-        return new NozzleStock(goodUnits - 1, wornUnits, damagedUnits);
+        if (goodUnits > 0) {
+            return new NozzleStock(goodUnits - 1, wornUnits, damagedUnits);
+        }
+        if (wornUnits > 0) {
+            return new NozzleStock(goodUnits, wornUnits - 1, damagedUnits);
+        }
+        throw new IllegalStateException("Nozzle has no installable units");
     }
 
     private static void requirePositive(int units) {
