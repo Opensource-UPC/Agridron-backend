@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE TABLE parcel (
     id                 BIGSERIAL PRIMARY KEY,
     farm_id            BIGINT        NOT NULL,
