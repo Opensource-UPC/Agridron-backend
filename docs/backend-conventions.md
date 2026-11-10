@@ -34,6 +34,7 @@ pe.com.agridron.<bc>
 │   │   └── commands
 │   ├── events
 │   ├── repositories
+│   ├── ports
 │   └── exceptions
 ├── application
 │   ├── commandservices
@@ -117,15 +118,17 @@ Sufijos reconocidos por el mapeador:
 | `_INVALID_STATE`, `_NOT_AVAILABLE`, `_NOT_SUITABLE`, `_INSUFFICIENT`, `INSUFFICIENT_*` | 422 |
 | `_UNAVAILABLE`, `SERVICE_UNAVAILABLE` | 503 |
 
+`INVALID_GEOMETRY` es un código específico de Field y se mapea a **400 Bad Request**.
+
 ### 3.3 Registro de códigos por BC
 
 | BC | Códigos reservados |
 |---|---|
 | IAM | `USER_NOT_FOUND`, `USER_CONFLICT`, `ROLE_NOT_FOUND`, `ROLE_CONFLICT`, `INVALID_CREDENTIALS`, `ACCESS_DENIED`, `TOKEN_EXPIRED` |
-| Field | `FARM_NOT_FOUND`, `FARM_CONFLICT`, `PARCEL_NOT_FOUND`, `PARCEL_CONFLICT`, `CROP_NOT_FOUND`, `INVALID_GEOMETRY` |
+| Field | `FARM_NOT_FOUND`, `FARM_CONFLICT`, `PARCEL_NOT_FOUND`, `PARCEL_CONFLICT`, `PARCEL_INVALID_STATE`, `CROP_NOT_FOUND`, `FUMIGATION_AREA_NOT_FOUND`, `INVALID_GEOMETRY` |
 | Flight | `MISSION_NOT_FOUND`, `MISSION_CONFLICT`, `MISSION_INVALID_STATE`, `DRONE_NOT_AVAILABLE`, `WEATHER_NOT_SUITABLE`, `INCIDENT_NOT_FOUND` |
 | Weather | `WEATHER_UNAVAILABLE`, `WEATHER_DATA_UNAVAILABLE` |
-| Analytics | `REPORT_NOT_FOUND`, `REPORT_CONFLICT`, `HISTORY_NOT_FOUND` |
+| Analytics | `REPORT_NOT_FOUND`, `REPORT_CONFLICT`, `HISTORY_NOT_FOUND`, `HISTORY_CONFLICT` |
 | Inventory | `DRONE_NOT_FOUND`, `DRONE_CONFLICT`, `NOZZLE_NOT_FOUND`, `SUPPLY_NOT_FOUND`, `INSUFFICIENT_STOCK`, `MAINTENANCE_NOT_FOUND` |
 
 Los mensajes localizados se agregan en `messages.properties` y `messages_es.properties` con la
@@ -144,6 +147,15 @@ categoría.
 - Éxito: `Result` → `ResponseEntityAssembler`.
 - Error: siempre RFC 9457 (`application/problem+json`).
 - Nunca devolver entidades JPA ni agregados de dominio directamente.
+- Listados: paginación **opt-in**. Sin `page` ni `size` se mantiene el array JSON; con
+  cualquiera de ellos se devuelve un sobre `PageResource` (`content`, `page`, `size`,
+  `totalElements`, `totalPages`, `first`, `last`).
+- `page` es base 0 y `size` va de 1 a 100 (por defecto 20). `sort` acepta `campo` o
+  `campo,asc|desc`, con un solo campo y `asc` por defecto. Cada endpoint declara una lista
+  blanca de campos ordenables y un desempate estable por `id`.
+- Las primitivas de paginación (`Pagination`, `SortOrder`, `PageResult`) viven en el dominio
+  del BC; los puertos no exponen tipos de Spring Data. Ver
+  [`ADR-011`](adrs/ADR-011-opt-in-pagination.md).
 
 Ejemplo de controlador:
 
@@ -230,9 +242,17 @@ La estrategia `SnakeCasePhysicalNamingStrategy` aplica la conversión automátic
 
 ### 7.2 Eventos de integración
 
-- Viven en `<bc>.interfaces.events`.
+- Viven en `<bc>.interfaces.events` y son `record` inmutables.
 - Implementan `IntegrationEvent` (`eventId`, `occurredOn`, `eventType`).
-- Se producen traduciendo un evento de dominio en `application/internal/eventhandlers`.
+- `eventId` es un UUID único por instancia, `occurredOn` se fija al traducir y `eventType` es
+  una constante estable con el formato `<bc>.<agregado>.<accion-en-pasado>`.
+- Se producen traduciendo un evento de dominio en `<bc>.interfaces.eventhandlers` con
+  `@TransactionalEventListener(phase = AFTER_COMMIT)`.
+- La traducción vive en `interfaces` porque es un adaptador de entrada y `application` no puede
+  depender de `interfaces` ni de `infrastructure` (regla ArchUnit). Ver
+  [`ADR-009`](adrs/ADR-009-field-integration-events.md).
+- Los consumidores deben ser idempotentes por `eventId`.
+- Sin outbox, la entrega es in-process, after-commit y *at-most-once*.
 - **Ningún BC consume eventos de dominio de otro BC.**
 
 ---

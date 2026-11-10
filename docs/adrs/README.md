@@ -9,5 +9,9 @@
 | [ADR-005](ADR-005-flyway-migrations.md) | Flyway como única fuente del esquema | Aceptado |
 | [ADR-006](ADR-006-postgis-geometries.md) | PostGIS para geometrías | Aceptado |
 | [ADR-007](ADR-007-shared-kernel-boundaries.md) | Límites del shared kernel | Aceptado |
+| [ADR-008](ADR-008-geojson-at-rest-boundary.md) | GeoJSON en el borde REST | Aceptado |
+| [ADR-009](ADR-009-field-integration-events.md) | Eventos de integración de Field Management | Aceptado |
+| [ADR-010](ADR-010-parcel-usage-port.md) | Puerto de uso de parcelas para la salvaguarda FM-006 | Aceptado |
+| [ADR-011](ADR-011-opt-in-pagination.md) | Paginación y orden opt-in en los listados | Aceptado |
 
 Formato basado en [Michael Nygard](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).

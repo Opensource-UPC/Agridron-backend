@@ -52,6 +52,18 @@ La API queda disponible en `http://localhost:8080`.
 ```text
 src/main/java/pe/com/agridron
 ├── AgridronApplication.java
+├── analytics                       # Analytics & Reporting (reportes, historial e indicadores)
+│   ├── application                 # command/query services
+│   ├── domain                      # agregados, value objects, eventos, repositorios, calculadora de indicadores
+│   ├── infrastructure/persistence  # entidades JPA, specifications y adaptadores
+│   └── interfaces/rest             # controladores, resources y assemblers
+├── field                           # Field Management (fincas, parcelas, cultivos, fumigación)
+│   ├── application                 # command/query services
+│   ├── domain                      # agregados, value objects, eventos, repositorios
+│   ├── infrastructure/persistence  # entidades JPA y adaptadores
+│   ├── interfaces/eventhandlers    # traducción dominio → evento de integración
+│   ├── interfaces/events           # eventos de integración publicados
+│   └── interfaces/rest             # controladores, resources y assemblers
 └── shared
     ├── application/result          # Result<T, E> y ApplicationError
     ├── domain
@@ -60,15 +72,15 @@ src/main/java/pe/com/agridron
     ├── infrastructure
     │   ├── concurrency             # Virtual threads
     │   ├── documentation           # OpenAPI
-    │   ├── events                  # DomainEventPublisher
+    │   ├── events                  # DomainEventPublisher / IntegrationEventPublisher
     │   ├── i18n                    # LocaleResolver
     │   ├── persistence/jpa         # Entidades base, auditoría, naming strategy
     │   └── web                     # CORS
     └── interfaces/rest             # ProblemDetail, manejador global, status
 ```
 
-Los bounded contexts (`iam`, `field`, `flight`, `weather`, `analytics`, `inventory`) se agregarán
-como paquetes hermanos de `shared`, cada uno con las capas `domain`, `application`,
+El resto de bounded contexts (`iam`, `flight`, `weather`, `inventory`) se
+agregarán como paquetes hermanos de `shared`, cada uno con las capas `domain`, `application`,
 `infrastructure` e `interfaces`.
 
 ## Pruebas
@@ -87,6 +99,11 @@ Antes de escribir código en un bounded context, lee
 [`docs/backend-conventions.md`](docs/backend-conventions.md).
 
 Decisiones de arquitectura registradas en [`docs/adrs`](docs/adrs).
+
+El mapeo de persistencia de Field Management está en
+[`docs/field-persistence.md`](docs/field-persistence.md), su contrato HTTP en
+[`docs/field-api.md`](docs/field-api.md) y su catálogo de eventos de integración en
+[`docs/field-events.md`](docs/field-events.md).
 
 ## Ramas
 

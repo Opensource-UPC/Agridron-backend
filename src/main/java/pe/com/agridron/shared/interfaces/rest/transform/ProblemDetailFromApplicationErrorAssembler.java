@@ -73,7 +73,8 @@ public final class ProblemDetailFromApplicationErrorAssembler {
      */
     public static HttpStatusCode toStatusFromErrorCode(String errorCode) {
         return switch (errorCode) {
-            case "VALIDATION_ERROR", "INVALID_INPUT", "MALFORMED_REQUEST" -> HttpStatus.BAD_REQUEST;
+            case "VALIDATION_ERROR", "INVALID_INPUT", "MALFORMED_REQUEST", "INVALID_GEOMETRY" ->
+                    HttpStatus.BAD_REQUEST;
             case "UNAUTHORIZED", "INVALID_CREDENTIALS", "TOKEN_EXPIRED", "TOKEN_INVALID" ->
                     HttpStatus.UNAUTHORIZED;
             case "ACCESS_DENIED", "FORBIDDEN" -> HttpStatus.FORBIDDEN;
@@ -98,6 +99,7 @@ public final class ProblemDetailFromApplicationErrorAssembler {
     private static URI toProblemTypeUri(String errorCode) {
         var slug = switch (errorCode) {
             case "VALIDATION_ERROR" -> "validation-error";
+            case "INVALID_GEOMETRY" -> "invalid-geometry";
             case "BUSINESS_RULE_VIOLATION" -> "business-rule-violation";
             case "UNEXPECTED_ERROR" -> "unexpected-error";
             case "UNAUTHORIZED", "INVALID_CREDENTIALS", "TOKEN_EXPIRED", "TOKEN_INVALID" -> "unauthorized";
@@ -114,6 +116,7 @@ public final class ProblemDetailFromApplicationErrorAssembler {
     private static String toProblemTitle(String errorCode, HttpStatusCode status) {
         return switch (errorCode) {
             case "VALIDATION_ERROR" -> "Validation Error";
+            case "INVALID_GEOMETRY" -> "Invalid Geometry";
             case "BUSINESS_RULE_VIOLATION" -> "Business Rule Violation";
             case "UNAUTHORIZED", "INVALID_CREDENTIALS", "TOKEN_EXPIRED", "TOKEN_INVALID" -> "Unauthorized";
             case "ACCESS_DENIED", "FORBIDDEN" -> "Forbidden";

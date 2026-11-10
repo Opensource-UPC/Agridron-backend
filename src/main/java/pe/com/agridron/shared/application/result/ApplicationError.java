@@ -40,6 +40,13 @@ public record ApplicationError(
     }
 
     /**
+     * Invalid geometry error: a spatial value does not satisfy the geometry invariants.
+     */
+    public static ApplicationError invalidGeometry(String reason) {
+        return new ApplicationError("INVALID_GEOMETRY", "Invalid geometry", reason);
+    }
+
+    /**
      * Not found error: the requested resource does not exist.
      */
     public static ApplicationError notFound(String resourceType, String identifier) {

@@ -95,6 +95,23 @@ class ProblemDetailFromApplicationErrorAssemblerTest {
     }
 
     @Test
+    void mapsInvalidGeometryErrorsTo400() {
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
+
+        var response = ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(
+                new ApplicationError("INVALID_GEOMETRY", "Invalid geometry", "Self-intersecting polygon"));
+        var problemDetail = response.getBody();
+
+        assertNotNull(problemDetail);
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals(400, problemDetail.getStatus());
+        assertEquals("INVALID_GEOMETRY", problemDetail.getProperties().get("code"));
+        assertEquals("Invalid Geometry", problemDetail.getTitle());
+        assertEquals(URI.create("/api/v1/errors/invalid-geometry"), problemDetail.getType());
+        assertEquals("Self-intersecting polygon", problemDetail.getProperties().get("details"));
+    }
+
+    @Test
     void mapsUnavailableServicesTo503() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 

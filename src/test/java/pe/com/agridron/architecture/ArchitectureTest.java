@@ -4,7 +4,9 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import pe.com.agridron.shared.domain.events.IntegrationEvent;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
@@ -44,4 +46,18 @@ class ArchitectureTest {
                             "..infrastructure..",
                             "..interfaces..")
                     .because("application services depend on domain ports, not on adapters");
+
+    @ArchTest
+    static final ArchRule integration_events_must_implement_the_contract =
+            classes()
+                    .that().resideInAPackage("..interfaces.events..")
+                    .should().implement(IntegrationEvent.class)
+                    .because("every class in interfaces.events is part of the published language between bounded contexts");
+
+    @ArchTest
+    static final ArchRule integration_event_handlers_must_live_in_interfaces =
+            classes()
+                    .that().haveSimpleNameEndingWith("IntegrationEventsHandler")
+                    .should().resideInAPackage("..interfaces.eventhandlers..")
+                    .because("domain-to-integration translation is an interface adapter");
 }
