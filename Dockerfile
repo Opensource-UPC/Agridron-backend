@@ -25,6 +25,6 @@ COPY --from=build /app/target/*.jar app.jar
 USER agridron
 EXPOSE 8080
 
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseZGC"
+ENV JAVA_OPTS="-XX:+UseSerialGC -Xmx320m -XX:MaxMetaspaceSize=128m -Xss512k"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
