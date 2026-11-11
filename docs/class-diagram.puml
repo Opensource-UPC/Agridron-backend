@@ -1,0 +1,143 @@
+@startuml AgriDron_Backend_Packages
+title AgriDron Backend - DDD Package Architecture
+
+skinparam packageStyle rectangle
+skinparam shadowing true
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+package "AgriDron Backend" {
+
+    package "Field Management" as FIELD {
+        package "interfaces" as F_INT {
+            package "rest" as F_REST
+            package "events" as F_EVENTS
+            package "eventhandlers" as F_HANDLERS
+        }
+        package "application" as F_APP {
+            package "commandservices" as F_CMD
+            package "queryservices" as F_QUERY
+            package "internal" as F_APP_INTERNAL
+        }
+        package "domain" as F_DOMAIN {
+            package "model" as F_MODEL {
+                package "aggregates" as F_AGG
+                package "entities" as F_ENT
+                package "valueobjects" as F_VO
+                package "commands" as F_COMMANDS
+                package "queries" as F_QUERIES
+                package "services" as F_SERVICES
+            }
+            package "repositories" as F_REPOS
+            package "ports" as F_PORTS
+            package "events" as F_DOMAIN_EVENTS
+        }
+        package "infrastructure" as F_INFRA {
+            package "persistence.jpa" as F_PERSISTENCE
+            package "ports" as F_ADAPTERS
+        }
+    }
+
+    package "Inventory Management" as INVENTORY {
+        package "interfaces" as I_INT {
+            package "rest" as I_REST
+        }
+        package "application" as I_APP {
+            package "commandservices" as I_CMD
+            package "queryservices" as I_QUERY
+            package "internal" as I_INTERNAL
+        }
+        package "domain" as I_DOMAIN {
+            package "model" as I_MODEL {
+                package "aggregates" as I_AGG
+                package "valueobjects" as I_VO
+                package "commands" as I_COMMANDS
+                package "queries" as I_QUERIES
+                package "services" as I_SERVICES
+            }
+            package "repositories" as I_REPOS
+        }
+        package "infrastructure" as I_INFRA {
+            package "persistence.jpa" as I_PERSISTENCE
+        }
+    }
+
+    package "Analytics & Reporting" as ANALYTICS {
+        package "interfaces" as A_INT {
+            package "rest" as A_REST
+        }
+        package "application" as A_APP {
+            package "commandservices" as A_CMD
+            package "queryservices" as A_QUERY
+            package "internal" as A_INTERNAL
+        }
+        package "domain" as A_DOMAIN {
+            package "model" as A_MODEL {
+                package "aggregates" as A_AGG
+                package "entities" as A_ENT
+                package "valueobjects" as A_VO
+                package "commands" as A_COMMANDS
+                package "queries" as A_QUERIES
+                package "services" as A_SERVICES
+            }
+            package "repositories" as A_REPOS
+            package "events" as A_EVENTS
+        }
+        package "infrastructure" as A_INFRA {
+            package "persistence.jpa" as A_PERSISTENCE
+        }
+    }
+
+    package "Shared Kernel" as SHARED {
+        package "domain" as S_DOMAIN {
+            package "events" as S_EVENTS
+            package "model.aggregates" as S_AGG
+        }
+        package "application" as S_APP {
+            package "result" as S_RESULT
+        }
+        package "infrastructure" as S_INFRA {
+            package "events" as S_EVENT_INFRA
+            package "persistence.jpa" as S_PERSISTENCE
+            package "configuration" as S_CONFIG
+        }
+        package "interfaces" as S_INT
+    }
+}
+
+' Dependencies between layers
+F_REST ..> F_CMD
+F_REST ..> F_QUERY
+F_CMD ..> F_DOMAIN
+F_QUERY ..> F_DOMAIN
+F_INFRA ..> F_REPOS
+F_ADAPTERS ..> F_PORTS
+F_PERSISTENCE ..> F_DOMAIN
+
+I_REST ..> I_CMD
+I_REST ..> I_QUERY
+I_CMD ..> I_DOMAIN
+I_QUERY ..> I_DOMAIN
+I_INFRA ..> I_REPOS
+I_PERSISTENCE ..> I_DOMAIN
+
+A_REST ..> A_CMD
+A_REST ..> A_QUERY
+A_CMD ..> A_DOMAIN
+A_QUERY ..> A_DOMAIN
+A_INFRA ..> A_REPOS
+A_PERSISTENCE ..> A_DOMAIN
+
+' Shared Kernel dependencies
+F_DOMAIN ..> S_DOMAIN
+I_DOMAIN ..> S_DOMAIN
+A_DOMAIN ..> S_DOMAIN
+
+F_INFRA ..> S_INFRA
+I_INFRA ..> S_INFRA
+A_INFRA ..> S_INFRA
+
+' Cross-context integration
+F_HANDLERS ..> F_EVENTS
+F_HANDLERS ..> S_EVENTS
+F_ADAPTERS ..> F_PORTS
