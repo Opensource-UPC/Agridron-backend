@@ -89,7 +89,7 @@ class ParcelQueryServiceImplTest {
 
     private Parcel parcel(Long id, String name) {
         return Parcel.reconstitute(
-                id, 1L, null, name, geometry(), ParcelStatus.ACTIVE, null);
+                id, 1L, null, name, geometry(), ParcelStatus.ACTIVE, null, null);
     }
 
     private static FieldGeometry geometry() {

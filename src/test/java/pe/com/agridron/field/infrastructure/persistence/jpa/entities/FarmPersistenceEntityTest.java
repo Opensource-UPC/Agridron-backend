@@ -18,7 +18,7 @@ class FarmPersistenceEntityTest extends AbstractFieldPersistenceTest {
 
     @Test
     void persistsFarmWithAuditingFields() {
-        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
 
         var persisted = entityManager.persistFlushFind(farm);
 
@@ -34,7 +34,7 @@ class FarmPersistenceEntityTest extends AbstractFieldPersistenceTest {
 
     @Test
     void persistsAssignedSupervisors() {
-        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
         farm.replaceSupervisors(new LinkedHashSet<>(Set.of(20L, 30L)));
 
         var persisted = entityManager.persistFlushFind(farm);
@@ -46,7 +46,7 @@ class FarmPersistenceEntityTest extends AbstractFieldPersistenceTest {
 
     @Test
     void removingFarmDeletesItsSupervisors() {
-        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
         farm.replaceSupervisors(Set.of(20L, 30L));
         var persisted = entityManager.persistFlushFind(farm);
 
@@ -62,7 +62,7 @@ class FarmPersistenceEntityTest extends AbstractFieldPersistenceTest {
 
     @Test
     void replacingSupervisorsWithNullEmptiesTheCollection() {
-        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
         farm.replaceSupervisors(Set.of(20L));
 
         farm.replaceSupervisors(null);
@@ -72,7 +72,7 @@ class FarmPersistenceEntityTest extends AbstractFieldPersistenceTest {
 
     @Test
     void supervisorIdsExposedByEntityAreUnmodifiable() {
-        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
         farm.replaceSupervisors(Collections.singleton(20L));
 
         assertThat(farm.getSupervisorIds()).isUnmodifiable();

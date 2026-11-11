@@ -20,7 +20,7 @@ class ParcelTest {
     void createsAnActiveParcelAndDerivesItsArea() {
         var geometry = geometry(0.01);
 
-        var parcel = Parcel.create(1L, "  Lote 1  ", geometry, null, null);
+        var parcel = Parcel.create(1L, "  Lote 1  ", geometry, null, null, null);
 
         assertThat(parcel.getId()).isNull();
         assertThat(parcel.getFarmId()).isEqualTo(1L);
@@ -34,7 +34,7 @@ class ParcelTest {
 
     @Test
     void onCreatedRegistersParcelRegisteredEvent() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote 1", geometry(0.01), ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote 1", geometry(0.01), ParcelStatus.ACTIVE, null, null);
 
         parcel.onCreated();
 
@@ -49,7 +49,7 @@ class ParcelTest {
     @Test
     void onCreatedWithCropRegistersBothCreationEvents() {
         var parcel = Parcel.reconstitute(
-                5L, 1L, 2L, "Lote 1", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.VEGETATIVE);
+                5L, 1L, 2L, "Lote 1", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.VEGETATIVE, null);
 
         parcel.onCreated();
 
@@ -60,35 +60,35 @@ class ParcelTest {
 
     @Test
     void rejectsCropWithoutPhenologicalStage() {
-        assertThatThrownBy(() -> Parcel.create(1L, "Lote", geometry(0.01), 2L, null))
+        assertThatThrownBy(() -> Parcel.create(1L, "Lote", geometry(0.01), 2L, null, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("phenologicalStage");
     }
 
     @Test
     void rejectsPhenologicalStageWithoutCrop() {
-        assertThatThrownBy(() -> Parcel.create(1L, "Lote", geometry(0.01), null, PhenologicalStage.FLOWERING))
+        assertThatThrownBy(() -> Parcel.create(1L, "Lote", geometry(0.01), null, PhenologicalStage.FLOWERING, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("phenologicalStage");
     }
 
     @Test
     void rejectsNullGeometry() {
-        assertThatThrownBy(() -> Parcel.create(1L, "Lote", null, null, null))
+        assertThatThrownBy(() -> Parcel.create(1L, "Lote", null, null, null, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("geometry");
     }
 
     @Test
     void rejectsInvalidFarmId() {
-        assertThatThrownBy(() -> Parcel.create(0L, "Lote", geometry(0.01), null, null))
+        assertThatThrownBy(() -> Parcel.create(0L, "Lote", geometry(0.01), null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("farmId");
     }
 
     @Test
     void rejectsBlankName() {
-        assertThatThrownBy(() -> Parcel.create(1L, " ", geometry(0.01), null, null))
+        assertThatThrownBy(() -> Parcel.create(1L, " ", geometry(0.01), null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("name");
     }
@@ -96,7 +96,7 @@ class ParcelTest {
     @Test
     void reconstituteRejectsNullStatus() {
         assertThatThrownBy(() -> Parcel.reconstitute(
-                5L, 1L, null, "Lote", geometry(0.01), null, null))
+                5L, 1L, null, "Lote", geometry(0.01), null, null, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("status");
     }
@@ -104,7 +104,7 @@ class ParcelTest {
     @Test
     void redefiningGeometryRecalculatesAreaAndRegistersEvent() {
         var original = geometry(0.01);
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", original, ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", original, ParcelStatus.ACTIVE, null, null);
 
         parcel.redefineGeometry(geometry(0.02));
 
@@ -119,9 +119,9 @@ class ParcelTest {
 
     @Test
     void updatesCropAndRegistersCropInformationEvent() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null, null);
 
-        parcel.updateDetails("Lote", 2L, PhenologicalStage.FLOWERING);
+        parcel.updateDetails("Lote", 2L, PhenologicalStage.FLOWERING, null);
 
         assertThat(parcel.getName()).isEqualTo("Lote");
         assertThat(parcel.getCropId()).isEqualTo(2L);
@@ -138,9 +138,9 @@ class ParcelTest {
     @Test
     void updatingOnlyTheNameRegistersDetailsEvent() {
         var parcel = Parcel.reconstitute(
-                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING);
+                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING, null);
 
-        parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING);
+        parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING, null);
 
         assertThat(parcel.getName()).isEqualTo("Lote 1");
         assertThat(parcel.domainEvents()).singleElement()
@@ -153,9 +153,9 @@ class ParcelTest {
 
     @Test
     void updatingNameAndCropRegistersBothEvents() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null, null);
 
-        parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING);
+        parcel.updateDetails("Lote 1", 2L, PhenologicalStage.FLOWERING, null);
 
         assertThat(parcel.domainEvents())
                 .hasExactlyElementsOfTypes(
@@ -166,9 +166,9 @@ class ParcelTest {
     @Test
     void updatingWithTheSameDataRegistersNoEvents() {
         var parcel = Parcel.reconstitute(
-                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING);
+                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING, null);
 
-        parcel.updateDetails(" Lote ", 2L, PhenologicalStage.FLOWERING);
+        parcel.updateDetails(" Lote ", 2L, PhenologicalStage.FLOWERING, null);
 
         assertThat(parcel.domainEvents()).isEmpty();
     }
@@ -176,9 +176,9 @@ class ParcelTest {
     @Test
     void removingCropInformationClearsTheStage() {
         var parcel = Parcel.reconstitute(
-                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING);
+                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING, null);
 
-        parcel.updateDetails("Lote", null, null);
+        parcel.updateDetails("Lote", null, null, null);
 
         assertThat(parcel.getCropId()).isNull();
         assertThat(parcel.getPhenologicalStage()).isNull();
@@ -186,8 +186,37 @@ class ParcelTest {
     }
 
     @Test
+    void storesTrimmedImageAndNormalizesBlankToNull() {
+        var withImage = Parcel.create(
+                1L, "Lote", geometry(0.01), null, null, "  https://example.com/parcel.jpg  ");
+        var withBlankImage = Parcel.create(1L, "Lote", geometry(0.01), null, null, "   ");
+
+        assertThat(withImage.getImage()).isEqualTo("https://example.com/parcel.jpg");
+        assertThat(withBlankImage.getImage()).isNull();
+    }
+
+    @Test
+    void updatesImageWithoutRegisteringEvents() {
+        var parcel = Parcel.reconstitute(
+                5L, 1L, 2L, "Lote", geometry(0.01), ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING, null);
+
+        parcel.updateDetails("Lote", 2L, PhenologicalStage.FLOWERING, "https://example.com/parcel.jpg");
+
+        assertThat(parcel.getImage()).isEqualTo("https://example.com/parcel.jpg");
+        assertThat(parcel.domainEvents()).isEmpty();
+    }
+
+    @Test
+    void rejectsTooLongImage() {
+        assertThatThrownBy(() -> Parcel.create(
+                1L, "Lote", geometry(0.01), null, null, "a".repeat(501)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("500");
+    }
+
+    @Test
     void deactivatesParcelAndRegistersStatusEvent() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null, null);
 
         parcel.deactivate();
 
@@ -202,7 +231,7 @@ class ParcelTest {
 
     @Test
     void deactivatingTwiceIsIdempotent() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.INACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.INACTIVE, null, null);
 
         parcel.deactivate();
 
@@ -211,7 +240,7 @@ class ParcelTest {
 
     @Test
     void activatesAnInactiveParcel() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.INACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.INACTIVE, null, null);
 
         parcel.activate();
 
@@ -225,7 +254,7 @@ class ParcelTest {
 
     @Test
     void activatingAnActiveParcelIsIdempotent() {
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote", geometry(0.01), ParcelStatus.ACTIVE, null, null);
 
         parcel.activate();
 

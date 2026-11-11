@@ -53,7 +53,8 @@ public class ParcelCommandServiceImpl implements ParcelCommandService {
                 command.name(),
                 command.geometry(),
                 command.cropId(),
-                command.phenologicalStage());
+                command.phenologicalStage(),
+                command.image());
 
         if (parcelRepository.existsByFarmIdAndName(parcel.getFarmId(), parcel.getName())) {
             return Result.failure(ApplicationError.conflict(
@@ -74,7 +75,11 @@ public class ParcelCommandServiceImpl implements ParcelCommandService {
             return Result.failure(notFound("Crop", command.cropId()));
         }
 
-        parcel.updateDetails(command.name(), command.cropId(), command.phenologicalStage());
+        parcel.updateDetails(
+                command.name(),
+                command.cropId(),
+                command.phenologicalStage(),
+                command.image());
 
         if (parcelRepository.existsByFarmIdAndNameAndIdNot(
                 parcel.getFarmId(), parcel.getName(), parcel.getId())) {

@@ -11,10 +11,12 @@ import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
  * @param name              new parcel name, unique inside its farm
  * @param cropId            optional crop from the read-only catalog
  * @param phenologicalStage required when {@code cropId} is present
+ * @param image             new optional URL of the parcel image
  */
 public record UpdateParcelCommand(
         Long parcelId,
         String name,
         Long cropId,
-        PhenologicalStage phenologicalStage) {
+        PhenologicalStage phenologicalStage,
+        String image) {
 }

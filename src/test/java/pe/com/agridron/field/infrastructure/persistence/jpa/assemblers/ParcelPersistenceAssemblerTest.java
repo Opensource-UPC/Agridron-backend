@@ -17,7 +17,7 @@ class ParcelPersistenceAssemblerTest {
         var geometry = geometry(0, 0, 0.01);
         var entity = new ParcelPersistenceEntity(
                 1L, 2L, "Lote 1", geometry.polygon(), geometry.areaHectares(),
-                ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING);
+                ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING, null);
         entity.setId(5L);
 
         var parcel = ParcelPersistenceAssembler.toDomainFromPersistence(entity);
@@ -35,7 +35,7 @@ class ParcelPersistenceAssemblerTest {
     void buildsEntityFromDomainParcel() {
         var geometry = geometry(0, 0, 0.01);
         var parcel = Parcel.reconstitute(
-                5L, 1L, 2L, "Lote 1", geometry, ParcelStatus.INACTIVE, PhenologicalStage.HARVEST);
+                5L, 1L, 2L, "Lote 1", geometry, ParcelStatus.INACTIVE, PhenologicalStage.HARVEST, null);
 
         var entity = ParcelPersistenceAssembler.toPersistenceFromDomain(parcel);
 
@@ -54,10 +54,10 @@ class ParcelPersistenceAssemblerTest {
         var original = geometry(0, 0, 0.01);
         var updated = geometry(0.02, 0.02, 0.02);
         var parcel = Parcel.reconstitute(
-                5L, 1L, 3L, "Lote 2", updated, ParcelStatus.INACTIVE, PhenologicalStage.MATURATION);
+                5L, 1L, 3L, "Lote 2", updated, ParcelStatus.INACTIVE, PhenologicalStage.MATURATION, null);
         var entity = new ParcelPersistenceEntity(
                 1L, null, "Lote 1", original.polygon(), original.areaHectares(),
-                ParcelStatus.ACTIVE, null);
+                ParcelStatus.ACTIVE, null, null);
         entity.setId(5L);
 
         ParcelPersistenceAssembler.copyToPersistence(parcel, entity);
@@ -74,7 +74,7 @@ class ParcelPersistenceAssemblerTest {
     @Test
     void keepsNullCropInformation() {
         var geometry = geometry(0, 0, 0.01);
-        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote 1", geometry, ParcelStatus.ACTIVE, null);
+        var parcel = Parcel.reconstitute(5L, 1L, null, "Lote 1", geometry, ParcelStatus.ACTIVE, null, null);
 
         var entity = ParcelPersistenceAssembler.toPersistenceFromDomain(parcel);
 

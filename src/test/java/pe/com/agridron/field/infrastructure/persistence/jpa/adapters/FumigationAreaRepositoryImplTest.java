@@ -148,11 +148,11 @@ class FumigationAreaRepositoryImplTest extends AbstractFieldPersistenceTest {
     private Long persistParcel() {
         var index = SEQUENCE.incrementAndGet();
         var farm = entityManager.persistFlushFind(new FarmPersistenceEntity(
-                400L + index, "Finca " + index, "Lima", "Lima"));
+                400L + index, "Finca " + index, "Lima", "Lima", null));
         var parcel = entityManager.persistFlushFind(new ParcelPersistenceEntity(
                 farm.getId(), null, "Lote " + index,
                 PARCEL_GEOMETRY.polygon(), PARCEL_GEOMETRY.areaHectares(),
-                ParcelStatus.ACTIVE, null));
+                ParcelStatus.ACTIVE, null, null));
         return parcel.getId();
     }
 

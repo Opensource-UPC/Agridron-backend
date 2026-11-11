@@ -47,7 +47,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void savesNewParcelAndPublishesCreationEvent() {
         var farmId = persistFarm();
-        var parcel = Parcel.create(farmId, "Lote 1", geometry(0.001), null, null);
+        var parcel = Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null);
 
         var saved = parcelRepository.save(parcel);
 
@@ -67,7 +67,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     void savesParcelWithCropAndPublishesBothCreationEvents() {
         var farmId = persistFarm();
         var cropId = persistCrop();
-        var parcel = Parcel.create(farmId, "Lote 1", geometry(0.001), cropId, PhenologicalStage.VEGETATIVE);
+        var parcel = Parcel.create(farmId, "Lote 1", geometry(0.001), cropId, PhenologicalStage.VEGETATIVE, null);
 
         var saved = parcelRepository.save(parcel);
 
@@ -85,7 +85,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void findsParcelByIdWithItsGeometry() {
         var farmId = persistFarm();
-        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null));
 
         var parcel = parcelRepository.findById(saved.getId());
 
@@ -99,7 +99,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void redefiningGeometryPublishesUpdatedArea() {
         var farmId = persistFarm();
-        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null));
         var parcel = parcelRepository.findById(saved.getId()).orElseThrow();
         var newGeometry = geometry(0.003);
 
@@ -119,10 +119,10 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void updatingDetailsPublishesEvent() {
         var farmId = persistFarm();
-        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null));
         var parcel = parcelRepository.findById(saved.getId()).orElseThrow();
 
-        parcel.updateDetails("Lote 1 Actualizado", null, null);
+        parcel.updateDetails("Lote 1 Actualizado", null, null, null);
         var updated = parcelRepository.save(parcel);
 
         assertThat(updated.getName()).isEqualTo("Lote 1 Actualizado");
@@ -138,7 +138,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void changingStatusPublishesEvent() {
         var farmId = persistFarm();
-        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null));
         var parcel = parcelRepository.findById(saved.getId()).orElseThrow();
 
         parcel.deactivate();
@@ -158,9 +158,9 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     void listsParcelsOfFarmOrderedByName() {
         var farmId = persistFarm();
         var otherFarmId = persistFarm();
-        parcelRepository.save(Parcel.create(farmId, "Zeta", geometry(0.001), null, null));
-        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null));
-        parcelRepository.save(Parcel.create(otherFarmId, "Otra", geometry(0.001), null, null));
+        parcelRepository.save(Parcel.create(farmId, "Zeta", geometry(0.001), null, null, null));
+        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null, null));
+        parcelRepository.save(Parcel.create(otherFarmId, "Otra", geometry(0.001), null, null, null));
 
         var parcels = parcelRepository.findByFarmId(farmId);
 
@@ -170,9 +170,9 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void searchWithoutCriteriaReturnsAllParcelsOrderedByName() {
         var farmId = persistFarm();
-        parcelRepository.save(Parcel.create(farmId, "Gamma", geometry(0.003), null, null));
-        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null));
-        parcelRepository.save(Parcel.create(farmId, "Beta", geometry(0.002), null, null));
+        parcelRepository.save(Parcel.create(farmId, "Gamma", geometry(0.003), null, null, null));
+        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null, null));
+        parcelRepository.save(Parcel.create(farmId, "Beta", geometry(0.002), null, null, null));
 
         var result = parcelRepository.search(new ParcelSearchCriteria(null, null, null, null, null));
 
@@ -187,11 +187,11 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
         var secondFarmId = persistFarm();
         var cropId = persistCrop();
         var small = parcelRepository.save(
-                Parcel.create(firstFarmId, "Alfa", geometry(0.001), cropId, PhenologicalStage.VEGETATIVE));
+                Parcel.create(firstFarmId, "Alfa", geometry(0.001), cropId, PhenologicalStage.VEGETATIVE, null));
         var medium = parcelRepository.save(
-                Parcel.create(firstFarmId, "Beta", geometry(0.002), null, null));
+                Parcel.create(firstFarmId, "Beta", geometry(0.002), null, null, null));
         parcelRepository.save(
-                Parcel.create(secondFarmId, "Gamma", geometry(0.003), cropId, PhenologicalStage.FLOWERING));
+                Parcel.create(secondFarmId, "Gamma", geometry(0.003), cropId, PhenologicalStage.FLOWERING, null));
         medium.deactivate();
         parcelRepository.save(medium);
 
@@ -221,9 +221,9 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void paginatesAndOrdersSearches() {
         var farmId = persistFarm();
-        parcelRepository.save(Parcel.create(farmId, "Gamma", geometry(0.003), null, null));
-        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null));
-        parcelRepository.save(Parcel.create(farmId, "Beta", geometry(0.002), null, null));
+        parcelRepository.save(Parcel.create(farmId, "Gamma", geometry(0.003), null, null, null));
+        parcelRepository.save(Parcel.create(farmId, "Alfa", geometry(0.001), null, null, null));
+        parcelRepository.save(Parcel.create(farmId, "Beta", geometry(0.002), null, null, null));
         var criteria = new ParcelSearchCriteria(
                 farmId,
                 null,
@@ -246,7 +246,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void searchWithoutMatchesReturnsEmptyList() {
         var farmId = persistFarm();
-        parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null));
 
         var result = parcelRepository.search(new ParcelSearchCriteria(
                 null, null, null, new java.math.BigDecimal("100"), null));
@@ -258,7 +258,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     @Test
     void delegatesExistenceChecks() {
         var farmId = persistFarm();
-        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null));
+        var saved = parcelRepository.save(Parcel.create(farmId, "Lote 1", geometry(0.001), null, null, null));
 
         assertThat(parcelRepository.existsByFarmIdAndName(farmId, "Lote 1")).isTrue();
         assertThat(parcelRepository.existsByFarmIdAndName(farmId, "Lote 2")).isFalse();
@@ -270,7 +270,7 @@ class ParcelRepositoryImplTest extends AbstractFieldPersistenceTest {
     private Long persistFarm() {
         var index = SEQUENCE.incrementAndGet();
         var farm = entityManager.persistFlushFind(new FarmPersistenceEntity(
-                100L + index, "Finca " + index, "Lima", "Lima"));
+                100L + index, "Finca " + index, "Lima", "Lima", null));
         return farm.getId();
     }
 

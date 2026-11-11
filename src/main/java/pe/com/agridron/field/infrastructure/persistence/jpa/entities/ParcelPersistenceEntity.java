@@ -50,6 +50,9 @@ public class ParcelPersistenceEntity extends AuditableAbstractPersistenceEntity 
     @Column(name = "phenological_stage", length = 20)
     private PhenologicalStage phenologicalStage;
 
+    @Column(length = 500)
+    private String image;
+
     public ParcelPersistenceEntity(
             Long farmId,
             Long cropId,
@@ -57,7 +60,8 @@ public class ParcelPersistenceEntity extends AuditableAbstractPersistenceEntity 
             Polygon geometry,
             BigDecimal areaHectares,
             ParcelStatus status,
-            PhenologicalStage phenologicalStage) {
+            PhenologicalStage phenologicalStage,
+            String image) {
         this.farmId = farmId;
         this.cropId = cropId;
         this.name = name;
@@ -65,6 +69,7 @@ public class ParcelPersistenceEntity extends AuditableAbstractPersistenceEntity 
         this.areaHectares = areaHectares;
         this.status = status;
         this.phenologicalStage = phenologicalStage;
+        this.image = image;
     }
 
     public void updateDetails(
@@ -73,12 +78,14 @@ public class ParcelPersistenceEntity extends AuditableAbstractPersistenceEntity 
             Polygon geometry,
             BigDecimal areaHectares,
             ParcelStatus status,
-            PhenologicalStage phenologicalStage) {
+            PhenologicalStage phenologicalStage,
+            String image) {
         this.name = name;
         this.cropId = cropId;
         this.geometry = geometry;
         this.areaHectares = areaHectares;
         this.status = status;
         this.phenologicalStage = phenologicalStage;
+        this.image = image;
     }
 }

@@ -34,7 +34,7 @@ class FarmQueryServiceImplTest {
 
     @Test
     void returnsFarmById() {
-        var farm = Farm.reconstitute(7L, 10L, "Finca El Sol", "Lima", "Lima", Set.of(20L));
+        var farm = Farm.reconstitute(7L, 10L, "Finca El Sol", "Lima", "Lima", Set.of(20L), null);
         when(farmRepository.findById(7L)).thenReturn(Optional.of(farm));
 
         var result = service.handle(new GetFarmByIdQuery(7L));
@@ -56,8 +56,8 @@ class FarmQueryServiceImplTest {
     @Test
     void listsFarmsByOwner() {
         var farms = List.of(
-                Farm.reconstitute(7L, 10L, "Alfa", "Lima", "Lima", Set.of()),
-                Farm.reconstitute(8L, 10L, "Zeta", "Lima", "Lima", Set.of()));
+                Farm.reconstitute(7L, 10L, "Alfa", "Lima", "Lima", Set.of(), null),
+                Farm.reconstitute(8L, 10L, "Zeta", "Lima", "Lima", Set.of(), null));
         when(farmRepository.findAllByOwnerId(10L, Pagination.unpaged(), null))
                 .thenReturn(PageResult.unpaged(farms));
 
@@ -72,7 +72,7 @@ class FarmQueryServiceImplTest {
         var pagination = Pagination.of(1, 1);
         var sortOrder = new SortOrder("name", SortDirection.DESC);
         var page = new PageResult<>(
-                List.of(Farm.reconstitute(8L, 10L, "Zeta", "Lima", "Lima", Set.of())),
+                List.of(Farm.reconstitute(8L, 10L, "Zeta", "Lima", "Lima", Set.of(), null)),
                 1,
                 1,
                 2);

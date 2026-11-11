@@ -26,27 +26,35 @@ public class Farm extends AbstractDomainAggregateRoot<Farm> {
     private static final int NAME_MAX_LENGTH = 120;
     private static final int LOCATION_MAX_LENGTH = 255;
     private static final int DEPARTMENT_MAX_LENGTH = 100;
+    private static final int IMAGE_MAX_LENGTH = 500;
 
     private Long id;
     private final Long ownerId;
     private String name;
     private String location;
     private String department;
+    private String image;
     private final Set<Long> supervisorIds = new LinkedHashSet<>();
 
-    private Farm(Long ownerId, String name, String location, String department) {
+    private Farm(Long ownerId, String name, String location, String department, String image) {
         this.ownerId = DomainValidation.requirePositive(ownerId, "ownerId");
         this.name = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
         this.location = DomainValidation.requireText(location, "location", LOCATION_MAX_LENGTH);
         this.department = DomainValidation.requireText(department, "department", DEPARTMENT_MAX_LENGTH);
+        this.image = normalizeImage(image);
     }
 
     /**
      * Creates a new farm. The {@code FarmRegisteredEvent} is registered by {@link #onCreated()}
      * once the persistence adapter has assigned the identity.
      */
-    public static Farm register(Long ownerId, String name, String location, String department) {
-        return new Farm(ownerId, name, location, department);
+    public static Farm register(
+            Long ownerId,
+            String name,
+            String location,
+            String department,
+            String image) {
+        return new Farm(ownerId, name, location, department, image);
     }
 
     /**
@@ -58,8 +66,9 @@ public class Farm extends AbstractDomainAggregateRoot<Farm> {
             String name,
             String location,
             String department,
-            Collection<Long> supervisorIds) {
-        var farm = new Farm(ownerId, name, location, department);
+            Collection<Long> supervisorIds,
+            String image) {
+        var farm = new Farm(ownerId, name, location, department, image);
         farm.id = DomainValidation.requirePositive(id, "id");
         if (supervisorIds != null) {
             supervisorIds.forEach(farm::addSupervisor);
@@ -74,20 +83,23 @@ public class Farm extends AbstractDomainAggregateRoot<Farm> {
         registerDomainEvent(FarmRegisteredEvent.from(this));
     }
 
-    public void updateDetails(String name, String location, String department) {
+    public void updateDetails(String name, String location, String department, String image) {
         var newName = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
         var newLocation = DomainValidation.requireText(location, "location", LOCATION_MAX_LENGTH);
         var newDepartment = DomainValidation.requireText(department, "department", DEPARTMENT_MAX_LENGTH);
+        var newImage = normalizeImage(image);
 
         if (Objects.equals(this.name, newName)
                 && Objects.equals(this.location, newLocation)
-                && Objects.equals(this.department, newDepartment)) {
+                && Objects.equals(this.department, newDepartment)
+                && Objects.equals(this.image, newImage)) {
             return;
         }
 
         this.name = newName;
         this.location = newLocation;
         this.department = newDepartment;
+        this.image = newImage;
         registerDomainEvent(FarmDetailsUpdatedEvent.from(this));
     }
 
@@ -119,5 +131,12 @@ public class Farm extends AbstractDomainAggregateRoot<Farm> {
 
     private boolean addSupervisor(Long supervisorId) {
         return supervisorIds.add(DomainValidation.requirePositive(supervisorId, "supervisorId"));
+    }
+
+    private static String normalizeImage(String image) {
+        if (image == null || image.isBlank()) {
+            return null;
+        }
+        return DomainValidation.requireText(image, "image", IMAGE_MAX_LENGTH);
     }
 }

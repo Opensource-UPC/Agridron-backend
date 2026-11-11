@@ -11,11 +11,13 @@ import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
  * @param geometry          validated WGS 84 boundary
  * @param cropId            optional crop from the read-only catalog
  * @param phenologicalStage required when {@code cropId} is present
+ * @param image             optional URL of the parcel image
  */
 public record CreateParcelCommand(
         Long farmId,
         String name,
         FieldGeometry geometry,
         Long cropId,
-        PhenologicalStage phenologicalStage) {
+        PhenologicalStage phenologicalStage,
+        String image) {
 }

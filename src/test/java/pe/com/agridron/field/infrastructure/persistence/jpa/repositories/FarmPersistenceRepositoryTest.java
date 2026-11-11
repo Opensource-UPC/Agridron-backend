@@ -17,9 +17,9 @@ class FarmPersistenceRepositoryTest extends AbstractFieldPersistenceTest {
 
     @Test
     void findsFarmsByOwnerOrderedByName() {
-        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Zeta", "Lima", "Lima"));
-        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Alfa", "Lima", "Lima"));
-        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(20L, "Otra", "Lima", "Lima"));
+        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Zeta", "Lima", "Lima", null));
+        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Alfa", "Lima", "Lima", null));
+        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(20L, "Otra", "Lima", "Lima", null));
 
         var farms = farmPersistenceRepository.findAllByOwnerId(10L, Sort.by("name").ascending());
 
@@ -30,7 +30,7 @@ class FarmPersistenceRepositoryTest extends AbstractFieldPersistenceTest {
     @Test
     void detectsDuplicatedNameForOwner() {
         var farm = farmPersistenceRepository.saveAndFlush(
-                new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima"));
+                new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null));
 
         assertThat(farmPersistenceRepository.existsByOwnerIdAndName(10L, "Finca El Sol")).isTrue();
         assertThat(farmPersistenceRepository.existsByOwnerIdAndName(10L, "Otra")).isFalse();
@@ -43,19 +43,19 @@ class FarmPersistenceRepositoryTest extends AbstractFieldPersistenceTest {
 
     @Test
     void rejectsDuplicatedNameForSameOwner() {
-        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima"));
+        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null));
 
         assertThatThrownBy(() -> farmPersistenceRepository.saveAndFlush(
-                new FarmPersistenceEntity(10L, "Finca El Sol", "Ica", "Ica")))
+                new FarmPersistenceEntity(10L, "Finca El Sol", "Ica", "Ica", null)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void allowsSameNameForDifferentOwners() {
-        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima"));
+        farmPersistenceRepository.saveAndFlush(new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null));
 
         var other = farmPersistenceRepository.saveAndFlush(
-                new FarmPersistenceEntity(20L, "Finca El Sol", "Lima", "Lima"));
+                new FarmPersistenceEntity(20L, "Finca El Sol", "Lima", "Lima", null));
 
         assertThat(other.getId()).isNotNull();
     }

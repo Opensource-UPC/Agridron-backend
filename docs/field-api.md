@@ -101,7 +101,8 @@ Campos ordenables por endpoint:
   "ownerId": 10,
   "name": "Finca El Sol",
   "location": "Lurín, Lima",
-  "department": "Lima"
+  "department": "Lima",
+  "image": "https://example.com/farm.jpg"
 }
 ```
 
@@ -114,13 +115,14 @@ Respuesta `201 Created`:
   "name": "Finca El Sol",
   "location": "Lurín, Lima",
   "department": "Lima",
+  "image": "https://example.com/farm.jpg",
   "supervisorIds": []
 }
 ```
 
 Validaciones: `ownerId` positivo; `name` (máx. 120), `location` (máx. 255) y `department`
-(máx. 100) obligatorios y no en blanco. El nombre debe ser único por dueño
-(`409 FARM_CONFLICT`).
+(máx. 100) obligatorios y no en blanco. `image` es opcional (máx. 500); si llega vacío o en
+blanco se guarda como `null`. El nombre debe ser único por dueño (`409 FARM_CONFLICT`).
 
 ### `GET /api/v1/farms?ownerId={ownerId}`
 
@@ -134,7 +136,7 @@ Devuelve la finca o `404 FARM_NOT_FOUND`.
 
 ### `PUT /api/v1/farms/{farmId}`
 
-Reemplaza `name`, `location` y `department`. Mismas validaciones que la creación; el
+Reemplaza `name`, `location`, `department` e `image`. Mismas validaciones que la creación; el
 `ownerId` no se modifica. Responde `200`, `400`, `404` o `409`. Si algún dato cambia, publica
 `field.farm.details-updated` (ver [`field-events.md`](field-events.md)).
 
@@ -201,7 +203,8 @@ cliente nunca la envía.
   "name": "Lote 1",
   "geometry": { "type": "Polygon", "coordinates": [[[-77.042, -12.046], [-77.041, -12.046], [-77.041, -12.045], [-77.042, -12.045], [-77.042, -12.046]]] },
   "cropId": 2,
-  "phenologicalStage": "VEGETATIVE"
+  "phenologicalStage": "VEGETATIVE",
+  "image": "https://example.com/parcel.jpg"
 }
 ```
 
@@ -216,7 +219,8 @@ Respuesta `201 Created`:
   "geometry": { "type": "Polygon", "coordinates": [[[-77.042, -12.046], [-77.041, -12.046], [-77.041, -12.045], [-77.042, -12.045], [-77.042, -12.046]]] },
   "areaHectares": 1.2345,
   "status": "ACTIVE",
-  "phenologicalStage": "VEGETATIVE"
+  "phenologicalStage": "VEGETATIVE",
+  "image": "https://example.com/parcel.jpg"
 }
 ```
 
@@ -228,6 +232,7 @@ Reglas:
 - Sin `cropId`, `phenologicalStage` debe ser nulo.
 - El nombre es único dentro de la finca (`409 PARCEL_CONFLICT`).
 - La parcela nace en estado `ACTIVE`.
+- `image` es opcional (máx. 500); si llega vacío o en blanco se guarda como `null`.
 
 ### `GET /api/v1/parcels`
 
@@ -259,11 +264,11 @@ Devuelve la parcela o `404 PARCEL_NOT_FOUND`.
 
 ### `PUT /api/v1/parcels/{parcelId}`
 
-Actualiza `name`, `cropId` y `phenologicalStage`; la geometría se cambia por su endpoint
-dedicado.
+Actualiza `name`, `cropId`, `phenologicalStage` e `image`; la geometría se cambia por su
+endpoint dedicado.
 
 ```json
-{ "name": "Lote 2", "cropId": 2, "phenologicalStage": "FLOWERING" }
+{ "name": "Lote 2", "cropId": 2, "phenologicalStage": "FLOWERING", "image": "https://example.com/parcel.jpg" }
 ```
 
 Responde `200`, `400`, `404` (parcela o cultivo) o `409`. Si cambia el nombre, publica

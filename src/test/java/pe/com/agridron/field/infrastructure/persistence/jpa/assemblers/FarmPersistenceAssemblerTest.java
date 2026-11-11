@@ -12,7 +12,7 @@ class FarmPersistenceAssemblerTest {
 
     @Test
     void rebuildsDomainFarmFromEntity() {
-        var entity = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var entity = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
         entity.setId(7L);
         entity.replaceSupervisors(Set.of(20L, 30L));
 
@@ -28,7 +28,7 @@ class FarmPersistenceAssemblerTest {
 
     @Test
     void buildsEntityFromDomainFarm() {
-        var farm = Farm.reconstitute(7L, 10L, "Finca El Sol", "Lima", "Lima", Set.of(20L));
+        var farm = Farm.reconstitute(7L, 10L, "Finca El Sol", "Lima", "Lima", Set.of(20L), null);
 
         var entity = FarmPersistenceAssembler.toPersistenceFromDomain(farm);
 
@@ -40,8 +40,8 @@ class FarmPersistenceAssemblerTest {
 
     @Test
     void copiesMutableStateIntoAnExistingEntity() {
-        var farm = Farm.reconstitute(7L, 10L, "Nueva Finca", "Ica", "Ica", Set.of(40L));
-        var entity = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = Farm.reconstitute(7L, 10L, "Nueva Finca", "Ica", "Ica", Set.of(40L), null);
+        var entity = new FarmPersistenceEntity(10L, "Finca El Sol", "Lima", "Lima", null);
         entity.setId(7L);
         entity.replaceSupervisors(Set.of(20L));
 

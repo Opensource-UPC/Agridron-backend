@@ -9,10 +9,12 @@ package pe.com.agridron.field.domain.model.commands;
  * @param name       new farm name, unique per owner
  * @param location   new human-readable location
  * @param department new Peruvian department
+ * @param image      new optional URL of the farm image
  */
 public record UpdateFarmCommand(
         Long farmId,
         String name,
         String location,
-        String department) {
+        String department,
+        String image) {
 }

@@ -24,7 +24,8 @@ public final class FarmPersistenceAssembler {
                 entity.getName(),
                 entity.getLocation(),
                 entity.getDepartment(),
-                entity.getSupervisorIds());
+                entity.getSupervisorIds(),
+                entity.getImage());
     }
 
     /**
@@ -38,7 +39,8 @@ public final class FarmPersistenceAssembler {
                 farm.getOwnerId(),
                 farm.getName(),
                 farm.getLocation(),
-                farm.getDepartment());
+                farm.getDepartment(),
+                farm.getImage());
         entity.setId(farm.getId());
         entity.replaceSupervisors(farm.getSupervisorIds());
         return entity;
@@ -49,7 +51,11 @@ public final class FarmPersistenceAssembler {
      * its identity and optimistic-locking version.
      */
     public static void copyToPersistence(Farm farm, FarmPersistenceEntity entity) {
-        entity.updateDetails(farm.getName(), farm.getLocation(), farm.getDepartment());
+        entity.updateDetails(
+                farm.getName(),
+                farm.getLocation(),
+                farm.getDepartment(),
+                farm.getImage());
         entity.replaceSupervisors(farm.getSupervisorIds());
     }
 }

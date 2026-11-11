@@ -29,7 +29,8 @@ public final class ParcelPersistenceAssembler {
                 entity.getName(),
                 FieldGeometry.from(entity.getGeometry()),
                 entity.getStatus(),
-                entity.getPhenologicalStage());
+                entity.getPhenologicalStage(),
+                entity.getImage());
     }
 
     /**
@@ -46,7 +47,8 @@ public final class ParcelPersistenceAssembler {
                 parcel.getGeometry().polygon(),
                 parcel.getGeometry().areaHectares(),
                 parcel.getStatus(),
-                parcel.getPhenologicalStage());
+                parcel.getPhenologicalStage(),
+                parcel.getImage());
         entity.setId(parcel.getId());
         return entity;
     }
@@ -62,6 +64,7 @@ public final class ParcelPersistenceAssembler {
                 parcel.getGeometry().polygon(),
                 parcel.getGeometry().areaHectares(),
                 parcel.getStatus(),
-                parcel.getPhenologicalStage());
+                parcel.getPhenologicalStage(),
+                parcel.getImage());
     }
 }

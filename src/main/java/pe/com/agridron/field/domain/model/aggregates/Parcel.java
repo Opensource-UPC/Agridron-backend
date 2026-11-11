@@ -24,6 +24,7 @@ import java.util.Objects;
 public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
 
     private static final int NAME_MAX_LENGTH = 120;
+    private static final int IMAGE_MAX_LENGTH = 500;
 
     private Long id;
     private final Long farmId;
@@ -32,17 +33,20 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
     private FieldGeometry geometry;
     private ParcelStatus status;
     private PhenologicalStage phenologicalStage;
+    private String image;
 
     private Parcel(
             Long farmId,
             String name,
             FieldGeometry geometry,
             Long cropId,
-            PhenologicalStage phenologicalStage) {
+            PhenologicalStage phenologicalStage,
+            String image) {
         this.farmId = DomainValidation.requirePositive(farmId, "farmId");
         this.name = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
         this.geometry = Objects.requireNonNull(geometry, "geometry is required");
         this.status = ParcelStatus.ACTIVE;
+        this.image = normalizeImage(image);
         applyCropInformation(cropId, phenologicalStage);
     }
 
@@ -55,8 +59,9 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
             String name,
             FieldGeometry geometry,
             Long cropId,
-            PhenologicalStage phenologicalStage) {
-        return new Parcel(farmId, name, geometry, cropId, phenologicalStage);
+            PhenologicalStage phenologicalStage,
+            String image) {
+        return new Parcel(farmId, name, geometry, cropId, phenologicalStage, image);
     }
 
     /**
@@ -69,8 +74,9 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
             String name,
             FieldGeometry geometry,
             ParcelStatus status,
-            PhenologicalStage phenologicalStage) {
-        var parcel = new Parcel(farmId, name, geometry, cropId, phenologicalStage);
+            PhenologicalStage phenologicalStage,
+            String image) {
+        var parcel = new Parcel(farmId, name, geometry, cropId, phenologicalStage, image);
         parcel.id = DomainValidation.requirePositive(id, "id");
         parcel.status = Objects.requireNonNull(status, "status is required");
         return parcel;
@@ -90,10 +96,15 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
      * Updates the descriptive data and, optionally, the crop information.
      * A crop information event is registered only when the crop actually changes.
      */
-    public void updateDetails(String name, Long cropId, PhenologicalStage phenologicalStage) {
+    public void updateDetails(
+            String name,
+            Long cropId,
+            PhenologicalStage phenologicalStage,
+            String image) {
         var newName = DomainValidation.requireText(name, "name", NAME_MAX_LENGTH);
         var nameChanged = !Objects.equals(this.name, newName);
         this.name = newName;
+        this.image = normalizeImage(image);
         if (nameChanged) {
             registerDomainEvent(ParcelDetailsUpdatedEvent.from(this));
         }
@@ -151,5 +162,12 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
         this.phenologicalStage = Objects.requireNonNull(
                 phenologicalStage,
                 "phenologicalStage is required when cropId is present");
+    }
+
+    private static String normalizeImage(String image) {
+        if (image == null || image.isBlank()) {
+            return null;
+        }
+        return DomainValidation.requireText(image, "image", IMAGE_MAX_LENGTH);
     }
 }

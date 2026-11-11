@@ -23,6 +23,7 @@ public final class UpdateFarmCommandFromResourceAssembler {
                 farmId,
                 resource.name(),
                 resource.location(),
-                resource.department());
+                resource.department(),
+                resource.image());
     }
 }

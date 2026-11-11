@@ -127,7 +127,7 @@ class FumigationAreaCommandServiceImplTest {
 
     private Parcel parcel() {
         return Parcel.reconstitute(
-                1L, 10L, null, "Lote 1", PARCEL_GEOMETRY, ParcelStatus.ACTIVE, null);
+                1L, 10L, null, "Lote 1", PARCEL_GEOMETRY, ParcelStatus.ACTIVE, null, null);
     }
 
     private FumigationArea area(Long id) {

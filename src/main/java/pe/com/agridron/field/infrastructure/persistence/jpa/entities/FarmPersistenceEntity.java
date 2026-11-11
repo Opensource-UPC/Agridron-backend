@@ -38,22 +38,32 @@ public class FarmPersistenceEntity extends AuditableAbstractPersistenceEntity {
     @Column(nullable = false, length = 100)
     private String department;
 
+    @Column(length = 500)
+    private String image;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "farm_supervisor", joinColumns = @JoinColumn(name = "farm_id"))
     @Column(name = "supervisor_id", nullable = false)
     private Set<Long> supervisorIds = new LinkedHashSet<>();
 
-    public FarmPersistenceEntity(Long ownerId, String name, String location, String department) {
+    public FarmPersistenceEntity(
+            Long ownerId,
+            String name,
+            String location,
+            String department,
+            String image) {
         this.ownerId = ownerId;
         this.name = name;
         this.location = location;
         this.department = department;
+        this.image = image;
     }
 
-    public void updateDetails(String name, String location, String department) {
+    public void updateDetails(String name, String location, String department, String image) {
         this.name = name;
         this.location = location;
         this.department = department;
+        this.image = image;
     }
 
     /**

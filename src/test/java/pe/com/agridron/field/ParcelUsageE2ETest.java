@@ -81,12 +81,12 @@ class ParcelUsageE2ETest extends AbstractPostgisIntegrationTest {
 
     private Parcel createParcel() {
         var farm = farmCommandService.handle(new CreateFarmCommand(
-                        9001L, "Finca de prueba", "Lurín, Lima", "Lima"))
+                        9001L, "Finca de prueba", "Lurín, Lima", "Lima", null))
                 .toOptional()
                 .orElseThrow();
 
         return parcelCommandService.handle(new CreateParcelCommand(
-                        farm.getId(), "Lote de prueba", geometry(0.01), null, null))
+                        farm.getId(), "Lote de prueba", geometry(0.01), null, null, null))
                 .toOptional()
                 .orElseThrow();
     }

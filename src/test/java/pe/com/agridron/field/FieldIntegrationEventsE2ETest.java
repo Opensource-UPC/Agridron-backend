@@ -263,7 +263,7 @@ class FieldIntegrationEventsE2ETest extends AbstractPostgisIntegrationTest {
 
         transactionTemplate.executeWithoutResult(status -> {
             var result = farmCommandService.handle(
-                    new CreateFarmCommand(OWNER_ID, "Finca Revertida", "Lurín, Lima", "Lima"));
+                    new CreateFarmCommand(OWNER_ID, "Finca Revertida", "Lurín, Lima", "Lima", null));
 
             assertThat(result.isSuccess()).isTrue();
             status.setRollbackOnly();

@@ -73,7 +73,7 @@ class FarmsControllerWebMvcTest {
                 .andExpect(jsonPath("$.supervisorIds", hasSize(0)));
 
         verify(farmCommandService).handle(
-                new CreateFarmCommand(10L, "Finca El Sol", "Lurín, Lima", "Lima"));
+                new CreateFarmCommand(10L, "Finca El Sol", "Lurín, Lima", "Lima", null));
     }
 
     @Test
@@ -220,7 +220,7 @@ class FarmsControllerWebMvcTest {
                 .andExpect(jsonPath("$.id").value(1));
 
         verify(farmCommandService).handle(
-                new UpdateFarmCommand(1L, "Finca Nueva", "Ica", "Ica"));
+                new UpdateFarmCommand(1L, "Finca Nueva", "Ica", "Ica", null));
     }
 
     @Test
@@ -279,6 +279,6 @@ class FarmsControllerWebMvcTest {
     }
 
     private static Farm farm(Long id, Set<Long> supervisorIds) {
-        return Farm.reconstitute(id, 10L, "Finca El Sol", "Lurín, Lima", "Lima", supervisorIds);
+        return Farm.reconstitute(id, 10L, "Finca El Sol", "Lurín, Lima", "Lima", supervisorIds, null);
     }
 }

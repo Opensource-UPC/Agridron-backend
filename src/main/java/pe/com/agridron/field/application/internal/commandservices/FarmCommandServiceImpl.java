@@ -31,7 +31,8 @@ public class FarmCommandServiceImpl implements FarmCommandService {
                 command.ownerId(),
                 command.name(),
                 command.location(),
-                command.department());
+                command.department(),
+                command.image());
 
         if (farmRepository.existsByOwnerIdAndName(farm.getOwnerId(), farm.getName())) {
             return Result.failure(ApplicationError.conflict(
@@ -49,7 +50,7 @@ public class FarmCommandServiceImpl implements FarmCommandService {
             return Result.failure(notFound(command.farmId()));
         }
 
-        farm.updateDetails(command.name(), command.location(), command.department());
+        farm.updateDetails(command.name(), command.location(), command.department(), command.image());
 
         if (farmRepository.existsByOwnerIdAndNameAndIdNot(
                 farm.getOwnerId(), farm.getName(), farm.getId())) {

@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -165,6 +166,62 @@ class FieldManagementE2ETest extends AbstractPostgisIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value((int) areaId));
+    }
+
+    @Test
+    void persistsOptionalImagesForFarmsAndParcels() throws Exception {
+        var farmImage = "https://example.com/farm.jpg";
+        var parcelImage = "https://example.com/parcel.jpg";
+
+        var farmId = readId(mockMvc.perform(post("/api/v1/farms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"ownerId":%d,"name":"Finca con imagen","location":"Lurín, Lima",
+                                 "department":"Lima","image":"%s"}
+                                """.formatted(OWNER_ID, farmImage))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.image").value(farmImage))
+                .andReturn());
+
+        mockMvc.perform(get("/api/v1/farms/{farmId}", farmId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.image").value(farmImage));
+
+        var parcelId = readId(mockMvc.perform(post("/api/v1/parcels")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"farmId":%d,"name":"Lote con imagen","geometry":%s,"image":"%s"}
+                                """.formatted(farmId, polygonJson(-77.050, -12.050, 0.01), parcelImage))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.image").value(parcelImage))
+                .andReturn());
+
+        mockMvc.perform(get("/api/v1/parcels/{parcelId}", parcelId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.image").value(parcelImage));
+
+        mockMvc.perform(put("/api/v1/parcels/{parcelId}", parcelId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Lote con imagen","image":"   "}
+                                """)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.image").value(nullValue()));
+
+        mockMvc.perform(put("/api/v1/farms/{farmId}", farmId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Finca con imagen","location":"Lurín, Lima",
+                                 "department":"Lima","image":"%s"}
+                                """.formatted("a".repeat(501)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
     @Test

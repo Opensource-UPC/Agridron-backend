@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
  * @param name       new farm name, unique per owner
  * @param location   new human-readable location
  * @param department new Peruvian department
+ * @param image      new optional URL of the farm image
  */
 @Schema(name = "UpdateFarmRequest", description = "Data required to update a farm")
 public record UpdateFarmResource(
@@ -26,5 +27,9 @@ public record UpdateFarmResource(
         @Schema(description = "Peruvian department", example = "Lima")
         @NotBlank(message = "is required")
         @Size(max = 100, message = "must have at most 100 characters")
-        String department) {
+        String department,
+
+        @Schema(description = "Farm image URL", example = "https://example.com/farm.jpg", nullable = true)
+        @Size(max = 500, message = "must have at most 500 characters")
+        String image) {
 }

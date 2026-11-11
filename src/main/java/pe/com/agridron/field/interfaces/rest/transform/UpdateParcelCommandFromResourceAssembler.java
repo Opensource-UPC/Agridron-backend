@@ -23,6 +23,7 @@ public final class UpdateParcelCommandFromResourceAssembler {
                 parcelId,
                 resource.name(),
                 resource.cropId(),
-                resource.phenologicalStage());
+                resource.phenologicalStage(),
+                resource.image());
     }
 }

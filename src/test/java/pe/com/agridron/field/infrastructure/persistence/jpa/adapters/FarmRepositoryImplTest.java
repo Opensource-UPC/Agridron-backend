@@ -37,7 +37,7 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
 
     @Test
     void savesNewFarmAndPublishesCreationEvent() {
-        var farm = Farm.register(10L, "Finca El Sol", "Lima", "Lima");
+        var farm = Farm.register(10L, "Finca El Sol", "Lima", "Lima", null);
 
         var saved = farmRepository.save(farm);
 
@@ -107,7 +107,7 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
         var persisted = persistFarm(10L, "Finca El Sol", Set.of());
         var farm = farmRepository.findById(persisted.getId()).orElseThrow();
 
-        farm.updateDetails("Nueva Finca", "Ica", "Ica");
+        farm.updateDetails("Nueva Finca", "Ica", "Ica", null);
         var saved = farmRepository.save(farm);
 
         assertThat(saved.getName()).isEqualTo("Nueva Finca");
@@ -128,7 +128,7 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
         var persisted = persistFarm(10L, "Finca El Sol", Set.of());
         var farm = farmRepository.findById(persisted.getId()).orElseThrow();
 
-        farm.updateDetails("Finca El Sol", "Lima", "Lima");
+        farm.updateDetails("Finca El Sol", "Lima", "Lima", null);
         farmRepository.save(farm);
 
         assertThat(applicationEvents.stream(FarmDetailsUpdatedEvent.class)).isEmpty();
@@ -179,7 +179,7 @@ class FarmRepositoryImplTest extends AbstractFieldPersistenceTest {
     }
 
     private FarmPersistenceEntity persistFarm(Long ownerId, String name, Set<Long> supervisorIds) {
-        var entity = new FarmPersistenceEntity(ownerId, name, "Lima", "Lima");
+        var entity = new FarmPersistenceEntity(ownerId, name, "Lima", "Lima", null);
         entity.replaceSupervisors(supervisorIds);
         var persisted = entityManager.persistFlushFind(entity);
         entityManager.clear();

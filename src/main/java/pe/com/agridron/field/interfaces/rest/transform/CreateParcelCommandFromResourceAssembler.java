@@ -24,6 +24,7 @@ public final class CreateParcelCommandFromResourceAssembler {
                 FieldGeometryFromPolygonResourceAssembler
                         .toFieldGeometryFromResource(resource.geometry()),
                 resource.cropId(),
-                resource.phenologicalStage());
+                resource.phenologicalStage(),
+                resource.image());
     }
 }

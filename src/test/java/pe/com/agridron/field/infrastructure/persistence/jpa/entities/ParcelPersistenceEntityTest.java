@@ -27,7 +27,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
         var geometry = geometry(-77.042, -12.046, 0.01);
         var parcel = new ParcelPersistenceEntity(
                 farmId, null, "Lote 1", geometry.polygon(), geometry.areaHectares(),
-                ParcelStatus.ACTIVE, null);
+                ParcelStatus.ACTIVE, null, null);
 
         var persisted = entityManager.persistFlushFind(parcel);
 
@@ -49,7 +49,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
         var geometry = geometry(-77.042, -12.046, 0.001);
         var persisted = entityManager.persistFlushFind(new ParcelPersistenceEntity(
                 farmId, null, "Lote 1", geometry.polygon(), geometry.areaHectares(),
-                ParcelStatus.ACTIVE, null));
+                ParcelStatus.ACTIVE, null, null));
         entityManager.clear();
 
         var reloaded = entityManager.find(ParcelPersistenceEntity.class, persisted.getId());
@@ -66,7 +66,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
         var geometry = geometry(-77.042, -12.046, 0.01);
         var persisted = entityManager.persistFlushFind(new ParcelPersistenceEntity(
                 farmId, cropId, "Lote 1", geometry.polygon(), geometry.areaHectares(),
-                ParcelStatus.ACTIVE, PhenologicalStage.VEGETATIVE));
+                ParcelStatus.ACTIVE, PhenologicalStage.VEGETATIVE, null));
         entityManager.clear();
 
         var reloaded = entityManager.find(ParcelPersistenceEntity.class, persisted.getId());
@@ -84,7 +84,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
         assertThatThrownBy(() -> {
             entityManager.persist(new ParcelPersistenceEntity(
                     farmId, cropId, "Lote 1", geometry.polygon(), geometry.areaHectares(),
-                    ParcelStatus.ACTIVE, null));
+                    ParcelStatus.ACTIVE, null, null));
             entityManager.flush();
         }).hasMessageContaining("ck_parcel_crop_stage");
     }
@@ -97,7 +97,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
         assertThatThrownBy(() -> {
             entityManager.persist(new ParcelPersistenceEntity(
                     farmId, null, "Lote 1", geometry.polygon(), geometry.areaHectares(),
-                    ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING));
+                    ParcelStatus.ACTIVE, PhenologicalStage.FLOWERING, null));
             entityManager.flush();
         }).hasMessageContaining("ck_parcel_crop_stage");
     }
@@ -110,7 +110,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
         assertThatThrownBy(() -> {
             entityManager.persist(new ParcelPersistenceEntity(
                     farmId, null, "Lote 1", geometry.polygon(), java.math.BigDecimal.ZERO,
-                    ParcelStatus.ACTIVE, null));
+                    ParcelStatus.ACTIVE, null, null));
             entityManager.flush();
         }).hasMessageContaining("ck_parcel_area_positive");
     }
@@ -118,7 +118,7 @@ class ParcelPersistenceEntityTest extends AbstractFieldPersistenceTest {
     private Long persistFarm() {
         var index = SEQUENCE.incrementAndGet();
         var farm = entityManager.persistFlushFind(new FarmPersistenceEntity(
-                100L + index, "Finca " + index, "Lima", "Lima"));
+                100L + index, "Finca " + index, "Lima", "Lima", null));
         return farm.getId();
     }
 

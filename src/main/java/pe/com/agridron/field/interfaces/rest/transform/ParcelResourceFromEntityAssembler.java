@@ -28,6 +28,7 @@ public final class ParcelResourceFromEntityAssembler {
                         .toResourceFromFieldGeometry(parcel.getGeometry()),
                 parcel.getGeometry().areaHectares(),
                 parcel.getStatus(),
-                parcel.getPhenologicalStage());
+                parcel.getPhenologicalStage(),
+                parcel.getImage());
     }
 }

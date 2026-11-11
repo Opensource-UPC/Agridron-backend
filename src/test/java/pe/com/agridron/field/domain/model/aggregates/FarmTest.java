@@ -15,7 +15,7 @@ class FarmTest {
 
     @Test
     void registersFarmWithNormalizedText() {
-        var farm = Farm.register(10L, "  Finca El Sol  ", "  Lima  ", "  Lima  ");
+        var farm = Farm.register(10L, "  Finca El Sol  ", "  Lima  ", "  Lima  ", null);
 
         assertThat(farm.getId()).isNull();
         assertThat(farm.getOwnerId()).isEqualTo(10L);
@@ -28,7 +28,7 @@ class FarmTest {
 
     @Test
     void onCreatedRegistersFarmRegisteredEventWithIdentity() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca El Sol", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca El Sol", "Lima", "Lima", Set.of(), null);
 
         farm.onCreated();
 
@@ -42,7 +42,7 @@ class FarmTest {
 
     @Test
     void assignsSupervisorAndRegistersEvent() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
 
         farm.assignSupervisor(20L);
 
@@ -56,7 +56,7 @@ class FarmTest {
 
     @Test
     void assigningTheSameSupervisorTwiceIsIdempotent() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
 
         farm.assignSupervisor(20L);
         farm.assignSupervisor(20L);
@@ -67,7 +67,7 @@ class FarmTest {
 
     @Test
     void removesSupervisorAndRegistersEvent() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(20L));
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(20L), null);
 
         farm.removeSupervisor(20L);
 
@@ -81,7 +81,7 @@ class FarmTest {
 
     @Test
     void removingAnAbsentSupervisorIsIdempotent() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
 
         farm.removeSupervisor(20L);
 
@@ -90,9 +90,9 @@ class FarmTest {
 
     @Test
     void updateDetailsNormalizesTextAndRegistersEvent() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
 
-        farm.updateDetails("  Nueva Finca ", "  Ica ", "  Ica ");
+        farm.updateDetails("  Nueva Finca ", "  Ica ", "  Ica ", null);
 
         assertThat(farm.getName()).isEqualTo("Nueva Finca");
         assertThat(farm.getLocation()).isEqualTo("Ica");
@@ -109,16 +109,44 @@ class FarmTest {
 
     @Test
     void updatingDetailsWithoutChangesDoesNotRegisterEvent() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
 
-        farm.updateDetails("  Finca ", " Lima ", "Lima");
+        farm.updateDetails("  Finca ", " Lima ", "Lima", null);
 
         assertThat(farm.domainEvents()).isEmpty();
     }
 
     @Test
+    void storesTrimmedImageAndNormalizesBlankToNull() {
+        var withImage = Farm.register(10L, "Finca", "Lima", "Lima", "  https://example.com/farm.jpg  ");
+        var withBlankImage = Farm.register(10L, "Finca", "Lima", "Lima", "   ");
+
+        assertThat(withImage.getImage()).isEqualTo("https://example.com/farm.jpg");
+        assertThat(withBlankImage.getImage()).isNull();
+    }
+
+    @Test
+    void updatesImageAndRegistersDetailsEvent() {
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
+
+        farm.updateDetails("Finca", "Lima", "Lima", "https://example.com/farm.jpg");
+
+        assertThat(farm.getImage()).isEqualTo("https://example.com/farm.jpg");
+        assertThat(farm.domainEvents()).singleElement()
+                .isInstanceOf(FarmDetailsUpdatedEvent.class);
+    }
+
+    @Test
+    void rejectsTooLongImage() {
+        assertThatThrownBy(() -> Farm.register(
+                10L, "Finca", "Lima", "Lima", "a".repeat(501)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("500");
+    }
+
+    @Test
     void supervisorIdsAreUnmodifiable() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(20L));
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(20L), null);
 
         assertThatThrownBy(() -> farm.getSupervisorIds().add(30L))
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -126,42 +154,42 @@ class FarmTest {
 
     @Test
     void rejectsInvalidOwnerId() {
-        assertThatThrownBy(() -> Farm.register(0L, "Finca", "Lima", "Lima"))
+        assertThatThrownBy(() -> Farm.register(0L, "Finca", "Lima", "Lima", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("ownerId");
     }
 
     @Test
     void rejectsBlankName() {
-        assertThatThrownBy(() -> Farm.register(10L, "   ", "Lima", "Lima"))
+        assertThatThrownBy(() -> Farm.register(10L, "   ", "Lima", "Lima", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("name");
     }
 
     @Test
     void rejectsTooLongName() {
-        assertThatThrownBy(() -> Farm.register(10L, "a".repeat(121), "Lima", "Lima"))
+        assertThatThrownBy(() -> Farm.register(10L, "a".repeat(121), "Lima", "Lima", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("120");
     }
 
     @Test
     void rejectsBlankLocation() {
-        assertThatThrownBy(() -> Farm.register(10L, "Finca", " ", "Lima"))
+        assertThatThrownBy(() -> Farm.register(10L, "Finca", " ", "Lima", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("location");
     }
 
     @Test
     void rejectsBlankDepartment() {
-        assertThatThrownBy(() -> Farm.register(10L, "Finca", "Lima", " "))
+        assertThatThrownBy(() -> Farm.register(10L, "Finca", "Lima", " ", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("department");
     }
 
     @Test
     void rejectsInvalidSupervisorId() {
-        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of());
+        var farm = Farm.reconstitute(1L, 10L, "Finca", "Lima", "Lima", Set.of(), null);
 
         assertThatThrownBy(() -> farm.assignSupervisor(-1L))
                 .isInstanceOf(IllegalArgumentException.class)

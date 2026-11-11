@@ -13,6 +13,7 @@ import java.util.List;
  * @param location      human-readable location
  * @param department    Peruvian department
  * @param supervisorIds identifiers of the assigned supervisors
+ * @param image         optional URL of the farm image
  */
 @Schema(name = "FarmResponse", description = "Farm information")
 public record FarmResource(
@@ -32,5 +33,8 @@ public record FarmResource(
         String department,
 
         @Schema(description = "Identifiers of the assigned supervisors", example = "[20, 21]")
-        List<Long> supervisorIds) {
+        List<Long> supervisorIds,
+
+        @Schema(description = "Farm image URL", example = "https://example.com/farm.jpg", nullable = true)
+        String image) {
 }

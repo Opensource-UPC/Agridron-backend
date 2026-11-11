@@ -14,6 +14,7 @@ import pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage;
  * @param name              new parcel name, unique inside its farm
  * @param cropId            optional crop from the read-only catalog
  * @param phenologicalStage required when {@code cropId} is present
+ * @param image             new optional URL of the parcel image
  */
 @Schema(name = "UpdateParcelRequest", description = "Data required to update a parcel")
 public record UpdateParcelResource(
@@ -27,5 +28,9 @@ public record UpdateParcelResource(
         Long cropId,
 
         @Schema(description = "Phenological stage; required when cropId is present", example = "FLOWERING")
-        PhenologicalStage phenologicalStage) {
+        PhenologicalStage phenologicalStage,
+
+        @Schema(description = "Parcel image URL", example = "https://example.com/parcel.jpg", nullable = true)
+        @Size(max = 500, message = "must have at most 500 characters")
+        String image) {
 }

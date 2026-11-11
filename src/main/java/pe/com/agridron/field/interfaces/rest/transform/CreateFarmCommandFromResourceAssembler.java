@@ -22,6 +22,7 @@ public final class CreateFarmCommandFromResourceAssembler {
                 resource.ownerId(),
                 resource.name(),
                 resource.location(),
-                resource.department());
+                resource.department(),
+                resource.image());
     }
 }

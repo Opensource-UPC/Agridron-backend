@@ -17,6 +17,7 @@ import java.math.BigDecimal;
  * @param areaHectares      geodesic area calculated by the domain
  * @param status            operational status
  * @param phenologicalStage phenological stage, present only when a crop is assigned
+ * @param image             optional URL of the parcel image
  */
 @Schema(name = "ParcelResponse", description = "Parcel information")
 public record ParcelResource(
@@ -42,5 +43,8 @@ public record ParcelResource(
         ParcelStatus status,
 
         @Schema(description = "Phenological stage", example = "VEGETATIVE", nullable = true)
-        PhenologicalStage phenologicalStage) {
+        PhenologicalStage phenologicalStage,
+
+        @Schema(description = "Parcel image URL", example = "https://example.com/parcel.jpg", nullable = true)
+        String image) {
 }

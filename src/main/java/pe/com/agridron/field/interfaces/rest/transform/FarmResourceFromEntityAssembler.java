@@ -26,6 +26,7 @@ public final class FarmResourceFromEntityAssembler {
                 farm.getName(),
                 farm.getLocation(),
                 farm.getDepartment(),
-                List.copyOf(farm.getSupervisorIds()));
+                List.copyOf(farm.getSupervisorIds()),
+                farm.getImage());
     }
 }

@@ -14,6 +14,7 @@ espacial en [`ADR-006`](adrs/ADR-006-postgis-geometries.md) y el contrato HTTP e
 | `V203` | Tabla `parcel` |
 | `V204` | Tabla `fumigation_area` |
 | `V205` | Semilla del catálogo de cultivos |
+| `V206` | Columnas `image` en `farm` y `parcel` |
 
 Todas las tablas auditables incluyen `created_at`, `updated_at` y `version`, y el esquema se
 valida con `ddl-auto=validate`.
@@ -27,6 +28,7 @@ valida con `ddl-auto=validate`.
 | `id` | `farm.id` |
 | `ownerId` | `farm.owner_id` (sin FK: pertenece a IAM) |
 | `name`, `location`, `department` | `farm.name`, `farm.location`, `farm.department` |
+| `image` | `farm.image` (`VARCHAR(500)`, opcional) |
 | `supervisorIds` | `farm_supervisor.supervisor_id` |
 
 - `uk_farm_owner_id_name` evita nombres duplicados por dueño.
@@ -44,6 +46,7 @@ valida con `ddl-auto=validate`.
 | `geometry.areaHectares()` | `parcel.area_hectares` (`NUMERIC(12,4)`) |
 | `status` | `parcel.status` (`VARCHAR`, enum como texto) |
 | `phenologicalStage` | `parcel.phenological_stage` (`VARCHAR`, opcional) |
+| `image` | `parcel.image` (`VARCHAR(500)`, opcional) |
 
 Restricciones relevantes:
 

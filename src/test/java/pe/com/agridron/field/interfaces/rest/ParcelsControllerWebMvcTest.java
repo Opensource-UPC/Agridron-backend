@@ -249,7 +249,7 @@ class ParcelsControllerWebMvcTest {
                 .andExpect(jsonPath("$.id").value(5));
 
         verify(parcelCommandService).handle(
-                new UpdateParcelCommand(5L, "Lote 2", 2L, PhenologicalStage.FLOWERING));
+                new UpdateParcelCommand(5L, "Lote 2", 2L, PhenologicalStage.FLOWERING, null));
     }
 
     @Test
@@ -312,7 +312,7 @@ class ParcelsControllerWebMvcTest {
 
     private static Parcel parcel(Long id, ParcelStatus status) {
         return Parcel.reconstitute(
-                id, 1L, 2L, "Lote 1", geometry(), status, PhenologicalStage.VEGETATIVE);
+                id, 1L, 2L, "Lote 1", geometry(), status, PhenologicalStage.VEGETATIVE, null);
     }
 
     private static FieldGeometry geometry() {

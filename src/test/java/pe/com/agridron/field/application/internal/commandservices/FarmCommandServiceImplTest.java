@@ -37,7 +37,7 @@ class FarmCommandServiceImplTest {
         when(farmRepository.existsByOwnerIdAndName(10L, "Finca El Sol")).thenReturn(false);
         stubSaveWithId(7L);
 
-        var result = service.handle(new CreateFarmCommand(10L, "Finca El Sol", "Lima", "Lima"));
+        var result = service.handle(new CreateFarmCommand(10L, "Finca El Sol", "Lima", "Lima", null));
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.toOptional().orElseThrow().getId()).isEqualTo(7L);
@@ -49,7 +49,7 @@ class FarmCommandServiceImplTest {
     void rejectsDuplicatedNameOnCreate() {
         when(farmRepository.existsByOwnerIdAndName(10L, "Finca El Sol")).thenReturn(true);
 
-        var result = service.handle(new CreateFarmCommand(10L, "Finca El Sol", "Lima", "Lima"));
+        var result = service.handle(new CreateFarmCommand(10L, "Finca El Sol", "Lima", "Lima", null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(resultErrorCode(result)).isEqualTo("FARM_CONFLICT");
@@ -61,7 +61,7 @@ class FarmCommandServiceImplTest {
         when(farmRepository.existsByOwnerIdAndName(10L, "Finca El Sol")).thenReturn(false);
         stubSaveWithId(7L);
 
-        service.handle(new CreateFarmCommand(10L, "  Finca El Sol  ", "Lima", "Lima"));
+        service.handle(new CreateFarmCommand(10L, "  Finca El Sol  ", "Lima", "Lima", null));
 
         verify(farmRepository).existsByOwnerIdAndName(10L, "Finca El Sol");
     }
@@ -72,7 +72,7 @@ class FarmCommandServiceImplTest {
         when(farmRepository.existsByOwnerIdAndNameAndIdNot(10L, "Nueva Finca", 7L)).thenReturn(false);
         when(farmRepository.save(any(Farm.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = service.handle(new UpdateFarmCommand(7L, "Nueva Finca", "Ica", "Ica"));
+        var result = service.handle(new UpdateFarmCommand(7L, "Nueva Finca", "Ica", "Ica", null));
 
         assertThat(result.isSuccess()).isTrue();
         var updated = result.toOptional().orElseThrow();
@@ -85,7 +85,7 @@ class FarmCommandServiceImplTest {
     void rejectsUpdateWhenFarmDoesNotExist() {
         when(farmRepository.findById(7L)).thenReturn(Optional.empty());
 
-        var result = service.handle(new UpdateFarmCommand(7L, "Nueva Finca", "Ica", "Ica"));
+        var result = service.handle(new UpdateFarmCommand(7L, "Nueva Finca", "Ica", "Ica", null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(resultErrorCode(result)).isEqualTo("FARM_NOT_FOUND");
@@ -97,7 +97,7 @@ class FarmCommandServiceImplTest {
         when(farmRepository.findById(7L)).thenReturn(Optional.of(farm(7L, Set.of())));
         when(farmRepository.existsByOwnerIdAndNameAndIdNot(10L, "Nueva Finca", 7L)).thenReturn(true);
 
-        var result = service.handle(new UpdateFarmCommand(7L, "Nueva Finca", "Ica", "Ica"));
+        var result = service.handle(new UpdateFarmCommand(7L, "Nueva Finca", "Ica", "Ica", null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(resultErrorCode(result)).isEqualTo("FARM_CONFLICT");
@@ -149,7 +149,7 @@ class FarmCommandServiceImplTest {
     }
 
     private Farm farm(Long id, Set<Long> supervisorIds) {
-        return Farm.reconstitute(id, 10L, "Finca El Sol", "Lima", "Lima", supervisorIds);
+        return Farm.reconstitute(id, 10L, "Finca El Sol", "Lima", "Lima", supervisorIds, null);
     }
 
     private void stubSaveWithId(Long id) {
@@ -161,7 +161,7 @@ class FarmCommandServiceImplTest {
                     farm.getName(),
                     farm.getLocation(),
                     farm.getDepartment(),
-                    farm.getSupervisorIds());
+                    farm.getSupervisorIds(), null);
         });
     }
 

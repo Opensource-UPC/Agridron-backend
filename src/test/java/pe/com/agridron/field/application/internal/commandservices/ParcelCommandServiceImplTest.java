@@ -55,7 +55,7 @@ class ParcelCommandServiceImplTest {
         stubSaveWithId(5L);
 
         var result = service.handle(new CreateParcelCommand(
-                1L, "Lote 1", geometry(0.001), null, null));
+                1L, "Lote 1", geometry(0.001), null, null, null));
 
         assertThat(result.isSuccess()).isTrue();
         var parcel = result.toOptional().orElseThrow();
@@ -73,7 +73,7 @@ class ParcelCommandServiceImplTest {
         stubSaveWithId(5L);
 
         var result = service.handle(new CreateParcelCommand(
-                1L, "Lote 1", geometry(0.001), 2L, PhenologicalStage.VEGETATIVE));
+                1L, "Lote 1", geometry(0.001), 2L, PhenologicalStage.VEGETATIVE, null));
 
         assertThat(result.isSuccess()).isTrue();
         var parcel = result.toOptional().orElseThrow();
@@ -86,7 +86,7 @@ class ParcelCommandServiceImplTest {
         when(farmRepository.findById(1L)).thenReturn(Optional.empty());
 
         var result = service.handle(new CreateParcelCommand(
-                1L, "Lote 1", geometry(0.001), null, null));
+                1L, "Lote 1", geometry(0.001), null, null, null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(errorCode(result)).isEqualTo("FARM_NOT_FOUND");
@@ -99,7 +99,7 @@ class ParcelCommandServiceImplTest {
         when(cropRepository.existsById(2L)).thenReturn(false);
 
         var result = service.handle(new CreateParcelCommand(
-                1L, "Lote 1", geometry(0.001), 2L, PhenologicalStage.VEGETATIVE));
+                1L, "Lote 1", geometry(0.001), 2L, PhenologicalStage.VEGETATIVE, null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(errorCode(result)).isEqualTo("CROP_NOT_FOUND");
@@ -112,7 +112,7 @@ class ParcelCommandServiceImplTest {
         when(parcelRepository.existsByFarmIdAndName(1L, "Lote 1")).thenReturn(true);
 
         var result = service.handle(new CreateParcelCommand(
-                1L, "Lote 1", geometry(0.001), null, null));
+                1L, "Lote 1", geometry(0.001), null, null, null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(errorCode(result)).isEqualTo("PARCEL_CONFLICT");
@@ -125,7 +125,7 @@ class ParcelCommandServiceImplTest {
         stubSaveWithId(5L);
 
         service.handle(new CreateParcelCommand(
-                1L, "  Lote 1  ", geometry(0.001), null, null));
+                1L, "  Lote 1  ", geometry(0.001), null, null, null));
 
         verify(parcelRepository).existsByFarmIdAndName(1L, "Lote 1");
     }
@@ -138,7 +138,7 @@ class ParcelCommandServiceImplTest {
         when(parcelRepository.save(any(Parcel.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = service.handle(new UpdateParcelCommand(
-                5L, "Lote 2", 2L, PhenologicalStage.FLOWERING));
+                5L, "Lote 2", 2L, PhenologicalStage.FLOWERING, null));
 
         assertThat(result.isSuccess()).isTrue();
         var parcel = result.toOptional().orElseThrow();
@@ -151,7 +151,7 @@ class ParcelCommandServiceImplTest {
     void rejectsUpdateWhenParcelDoesNotExist() {
         when(parcelRepository.findById(5L)).thenReturn(Optional.empty());
 
-        var result = service.handle(new UpdateParcelCommand(5L, "Lote 2", null, null));
+        var result = service.handle(new UpdateParcelCommand(5L, "Lote 2", null, null, null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(errorCode(result)).isEqualTo("PARCEL_NOT_FOUND");
@@ -164,7 +164,7 @@ class ParcelCommandServiceImplTest {
         when(cropRepository.existsById(2L)).thenReturn(false);
 
         var result = service.handle(new UpdateParcelCommand(
-                5L, "Lote 2", 2L, PhenologicalStage.FLOWERING));
+                5L, "Lote 2", 2L, PhenologicalStage.FLOWERING, null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(errorCode(result)).isEqualTo("CROP_NOT_FOUND");
@@ -176,7 +176,7 @@ class ParcelCommandServiceImplTest {
         when(parcelRepository.findById(5L)).thenReturn(Optional.of(parcel(5L, ParcelStatus.ACTIVE)));
         when(parcelRepository.existsByFarmIdAndNameAndIdNot(1L, "Lote 2", 5L)).thenReturn(true);
 
-        var result = service.handle(new UpdateParcelCommand(5L, "Lote 2", null, null));
+        var result = service.handle(new UpdateParcelCommand(5L, "Lote 2", null, null, null));
 
         assertThat(result.isFailure()).isTrue();
         assertThat(errorCode(result)).isEqualTo("PARCEL_CONFLICT");
@@ -264,7 +264,7 @@ class ParcelCommandServiceImplTest {
 
     private void stubExistingFarm(Long farmId) {
         when(farmRepository.findById(farmId)).thenReturn(Optional.of(
-                Farm.reconstitute(farmId, 10L, "Finca El Sol", "Lima", "Lima", Set.of())));
+                Farm.reconstitute(farmId, 10L, "Finca El Sol", "Lima", "Lima", Set.of(), null)));
     }
 
     private void stubSaveWithId(Long id) {
@@ -277,13 +277,13 @@ class ParcelCommandServiceImplTest {
                     parcel.getName(),
                     parcel.getGeometry(),
                     parcel.getStatus(),
-                    parcel.getPhenologicalStage());
+                    parcel.getPhenologicalStage(), null);
         });
     }
 
     private Parcel parcel(Long id, ParcelStatus status) {
         return Parcel.reconstitute(
-                id, 1L, null, "Lote 1", geometry(0.001), status, null);
+                id, 1L, null, "Lote 1", geometry(0.001), status, null, null);
     }
 
     private static FieldGeometry geometry(double size) {

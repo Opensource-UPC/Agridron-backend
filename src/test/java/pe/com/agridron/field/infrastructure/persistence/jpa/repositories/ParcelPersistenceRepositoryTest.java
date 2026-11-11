@@ -92,13 +92,13 @@ class ParcelPersistenceRepositoryTest extends AbstractFieldPersistenceTest {
         var stage = cropId == null ? null : pe.com.agridron.field.domain.model.valueobjects.PhenologicalStage.VEGETATIVE;
         return new ParcelPersistenceEntity(
                 farmId, cropId, name, geometry.polygon(), geometry.areaHectares(),
-                ParcelStatus.ACTIVE, stage);
+                ParcelStatus.ACTIVE, stage, null);
     }
 
     private Long persistFarm() {
         var index = SEQUENCE.incrementAndGet();
         var farm = entityManager.persistFlushFind(new FarmPersistenceEntity(
-                100L + index, "Finca " + index, "Lima", "Lima"));
+                100L + index, "Finca " + index, "Lima", "Lima", null));
         return farm.getId();
     }
 
