@@ -14,7 +14,7 @@ espacial en [`ADR-006`](adrs/ADR-006-postgis-geometries.md) y el contrato HTTP e
 | `V203` | Tabla `parcel` |
 | `V204` | Tabla `fumigation_area` |
 | `V205` | Semilla del catálogo de cultivos |
-| `V206` | Columnas `image` en `farm` y `parcel` |
+| `V207` | Columnas `image` en `farm` y `parcel` (idempotente) |
 
 Todas las tablas auditables incluyen `created_at`, `updated_at` y `version`, y el esquema se
 valida con `ddl-auto=validate`.
