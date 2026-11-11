@@ -46,9 +46,9 @@ public class OpenApiConfiguration {
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Local Development Environment"),
-                        new Server().url("https://staging-api.agridron.com").description("Staging Environment"),
-                        new Server().url("https://api.agridron.com").description("Production Environment")))
+                        new Server().url("/").description("Current Server (Auto)"),
+                        new Server().url("https://os-agridronbackend.onrender.com").description("Render Production"),
+                        new Server().url("http://localhost:8080").description("Local Development Environment")))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, new SecurityScheme()
